@@ -8,28 +8,32 @@
   </url>
   
   <url>
-    <loc>https://hello-world-example.github.io/HBase/docs/hidden/</loc>
-    <lastmod>2019-12-26T15:50:19+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://hello-world-example.github.io/HBase/docs/shortcodes/</loc>
+    <loc>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://hello-world-example.github.io/HBase/docs/with-toc/</loc>
+    <loc>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://hello-world-example.github.io/HBase/docs/without-toc/</loc>
-    <lastmod>2019-12-26T15:50:19+08:00</lastmod>
+    <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Other/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/todo/</loc>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/</loc>
-    <lastmod>2019-12-26T15:50:19+08:00</lastmod>
   </url>
   
   <url>

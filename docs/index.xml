@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Introduction on HBase</title>
+    <title>HBase</title>
     <link>https://hello-world-example.github.io/HBase/</link>
-    <description>Recent content in Introduction on HBase</description>
+    <description>Recent content on HBase</description>
     <generator>Hugo -- gohugo.io</generator>
     
 	<atom:link href="https://hello-world-example.github.io/HBase/index.xml" rel="self" type="application/rss+xml" />
@@ -15,49 +15,67 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://hello-world-example.github.io/HBase/_sidebar/</guid>
-      <description> 简介
- 示例
- 默认带目录 设置不带目录 特有功能
-   </description>
+      <description> Install  单机本地文件系统
+  Cli  Shell
+  Core  RowKey
+  杂项  </description>
     </item>
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/hidden/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/hidden/</guid>
-      <description>This page is hidden in menu Quondam non pater est dignior ille Eurotas Latent te facies Lorem markdownum arma ignoscas vocavit quoque ille texit mandata mentis ultimus, frementes, qui in vel. Hippotades Peleus pennas conscia cuiquam Caeneus quas.
- Pater demittere evincitque reddunt Maxime adhuc pressit huc Danaas quid freta Soror ego Luctus linguam saxa ultroque prior Tatiumque inquit Saepe liquitur subita superata dederat Anius sudor  Cum honorum Latona O fallor in sustinui iussorum equidem.</description>
+      <guid>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</guid>
+      <description>hbase shell 基础 启动 退出 ./bin/hbase shellhbase(main):001:0&amp;gt; exit 帮助 命令行帮助
+./bin/hbase shell -h shell 命令帮助
+hbase(main):001:0&amp;gt; help 启用 debug ./bin/hbase shell -d# 启动或者关闭 debug 模式 hbase(main):001:0&amp;gt; debug # 查看是否启动 debug 模式 hbase(main):001:0&amp;gt; debug? 命令 ddl list 列出所有表 表名支持 正则匹配
+hbase&amp;gt; list hbase&amp;gt; list &amp;#39;abc.*&amp;#39; create 创建表 describe 查看表结构 alter 修改表结构 exists 检查表是否存在 disable 禁用表 enable 启用表 drop 删除表 is_disabled 查看是否禁用表 is_enabled 查看是否启用表 dml scan  append, count, delete, deleteall, get, get_counter, incr, put, truncate, truncate_preserve</description>
     </item>
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/shortcodes/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/shortcodes/</guid>
-      <description>各种样式 折叠 Default {{&amp;lt; expand &amp;gt;}} ## Markdown content Lorem markdownum insigne... {{&amp;lt; /expand &amp;gt;}}  Expand ↕  Markdown content Lorem markdownum insigne&amp;hellip;    With Custom Label {{&amp;lt; expand &amp;#34;Custom Label&amp;#34; &amp;#34;...&amp;#34; &amp;gt;}} ## Markdown content Lorem markdownum insigne... {{&amp;lt; /expand &amp;gt;}}  Custom Label ...  Markdown content Lorem markdownum insigne. Olympo signis Delphis! Retexi Nereius nova develat stringit, frustra Saturnius uteroque inter! Oculis non ritibus Telethusa protulit, sed sed aere valvis inhaesuro Pallas animam: qui quid, ignes.</description>
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</guid>
+      <description> Rowkey 设计  Rowkey 是一段二进制码流，最大长度为64KB Rowkey 以字典顺序排序，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123 查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据 按单个Rowkey检索的效率是很高的，耗时在1毫秒以下  设计原则 长度原则 散列原则 唯一性 Read More  HBase Rowkey设计 HBase的RowKey设计原则 HBase Rowkey的散列与预分区设计  </description>
     </item>
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/with-toc/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/with-toc/</guid>
-      <description>默认带导航 Cognita laeva illo fracta Lorem markdownum pavent auras, surgit nunc cingentibus libet Laomedonque que est. Pastor An arbor filia foedat, ne fugit aliter, per. Helicona illas et callida neptem est Oresitrophos caput, dentibus est venit. Tenet reddite famuli praesentem fortibus, quaeque vis foret si frondes gelidos gravidae circumtulit inpulit armenta nativum.
- Te at cruciabere vides rubentis manebo Maturuit in praetemptat ruborem ignara postquam habitasse Subitarum supplevit quoque fontesque venabula spretis modo Montis tot est mali quasque gravis Quinquennem domus arsit ipse Pellem turis pugnabant locavit  Natus quaerere Pectora et sine mulcere, coniuge dum tincta incurvae.</description>
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</guid>
+      <description>单机本地文件系统 # 下载 wget http://mirrors.hust.edu.cn/apache/hbase/stable/hbase-1.2.6-bin.tar.gz vim hbase-1.2.6/conf/hbase-site.xml # 新增 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.rootdir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;file:///opt/data/hbase&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=true 设置true，最好指定 Zookeeper 的数据路劲 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.zookeeper.property.dataDir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;/opt/data/hbase-zookeeper&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=false 设置false，需要再加入以下配置 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.cluster.distributed&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;true&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; vim hbase-1.2.6/conf/hbase-env.sh # 修改 JAVA_HOME， 去掉前面的 #， # export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/ # 修改 HBASE_CLASSPATH ，去掉前面的 # # export HBASE_CLASSPATH=/opt/websuite/hbase-1.2.6 # 默认是 true ，如果使用 外部 Zookeeper ，设置为 false 即可 # export HBASE_MANAGES_ZK=true # 启动 Hbase .</description>
     </item>
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/without-toc/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Other/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/without-toc/</guid>
-      <description>不使用导航 Tanto oblite Lorem markdownum pectora novis patenti igne sua opus aurae feras materiaque illic demersit imago et aristas questaque posset. Vomit quoque suo inhaesuro clara. Esse cumque, per referri triste. Ut exponit solisque communis in tendens vincetis agisque iamque huic bene ante vetat omina Thebae rates. Aeacus servat admonitu concidit, ad resimas vultus et rugas vultu dignamque Siphnon.
-Quam iugulum regia simulacra, plus meruit humo pecorumque haesit, ab discedunt dixit: ritu pharetramque.</description>
+      <guid>https://hello-world-example.github.io/HBase/docs/Other/</guid>
+      <description> 杂项 《HBase权威指南》 读书笔记 03 客户端API-基础支持 第三种介绍了使用 Java API 对 HBase 进行 CRUD 操作
+ 创建 HTable 代价非常高（需要扫描.META.表）,建议在应用启动的时候创建，如果要使用多个，请使用 HTablePool 为每个线程创建各自的 HTable 实例 所有修改操作只保证 行级别的原子性
+ 随书代码
+  06 可用客户端  在 hbase shell 中使用命令时，表名、列名、查看命令帮助的命令名(help &amp;ldquo;get&amp;rdquo;) 必须用单引号或者双引号进行包裹
+ Master服务器 的 WebUI 默认端口是 60010 （hbase.master.info.port）
+ Region服务器 的 WebUI 默认端口是 60030 （hbase.regionserver.info.port）
+  08 架构  先联系Zookeeper 查找行键？  09 高级用法  KeyValue 存储时先按照行键排序，当列族有多个单元格时再按照列键排序，单元格的多个版本按照时间倒叙排序 尽量将要查询的信息包含在行键中，因为行键的筛选效率最高 HBase 适合高表，不适合宽表   《HBase企业应用开发实战》 读书笔记 04 HBase 表结构设计  表、RowKey、列族 唯一确定一行数据 单元格（Cell） 所在的行是有序的 RowKey是 不可分割的字节 HBase 只能在 Rowkey 上建立索引  </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/todo/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/todo/</guid>
+      <description>org.apache.hadoop.hbase.io.hfile.HFile ./hbase org.apache.hadoop.hbase.io.hfile.HFile -m -f /hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3
+Block index size as per heapsize: 704
+reader=/hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3,
+compression=snappy, cacheConf=CacheConfig:disabled, firstKey=a0000000be3d27a5a11d203f798781a9/Toutiao:ClickViewTS/1465783628056/Put, lastKey=a80072cbf409d04542f272446d4b65a4/Toutiao:ClickViewTS/1465776679416/Put, avgKeyLen=62, avgValueLen=93, entries=6451829, length=698454846  hbase org.apache.hadoop.hbase.mapreduce.Driver &amp;hellip;&amp;hellip;</description>
     </item>
     
   </channel>

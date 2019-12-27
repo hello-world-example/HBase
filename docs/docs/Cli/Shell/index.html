@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shell | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.79de1f7861b0c98f453c0a93bebf3608a280809e417787746c373699639900d7.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Cli\2fShell\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a><br /></li>
+</ul></li>
+<li><strong>Cli</strong>
+
+<ul>
+<li><a href="/HBase/docs/Cli/Shell/">Shell</a><br /></li>
+</ul></li>
+<li><strong>Core</strong>
+
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a><br /></li>
+</ul></li>
+<li><a href="/HBase/docs/Other/">杂项</a></li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Shell</strong>
+</header>
+
+      
+<article class="markdown">
+
+<h1 id="hbase-shell">hbase shell</h1>
+
+<h2 id="基础">基础</h2>
+
+<h3 id="启动-退出">启动 退出</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./bin/hbase shell</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase<span style="color:#f92672">(</span>main<span style="color:#f92672">)</span>:001:0&gt; exit</code></pre></div>
+<h3 id="帮助">帮助</h3>
+
+<p>命令行帮助</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./bin/hbase shell -h</code></pre></div>
+<p>shell 命令帮助</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase<span style="color:#f92672">(</span>main<span style="color:#f92672">)</span>:001:0&gt; help</code></pre></div>
+<h3 id="启用-debug">启用 debug</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./bin/hbase shell -d</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 启动或者关闭 debug 模式</span>
+hbase<span style="color:#f92672">(</span>main<span style="color:#f92672">)</span>:001:0&gt; debug
+
+<span style="color:#75715e"># 查看是否启动 debug 模式</span>
+hbase<span style="color:#f92672">(</span>main<span style="color:#f92672">)</span>:001:0&gt; debug?</code></pre></div>
+<h2 id="命令">命令</h2>
+
+<h3 id="ddl">ddl</h3>
+
+<h4 id="list-列出所有表">list 列出所有表</h4>
+
+<p>表名支持 正则匹配</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; list
+hbase&gt; list <span style="color:#e6db74">&#39;abc.*&#39;</span></code></pre></div>
+<h4 id="create-创建表">create 创建表</h4>
+
+<h4 id="describe-查看表结构">describe 查看表结构</h4>
+
+<h4 id="alter-修改表结构">alter 修改表结构</h4>
+
+<h4 id="exists-检查表是否存在">exists 检查表是否存在</h4>
+
+<h4 id="disable-禁用表">disable 禁用表</h4>
+
+<h4 id="enable-启用表">enable 启用表</h4>
+
+<h4 id="drop-删除表">drop 删除表</h4>
+
+<h4 id="is-disabled-查看是否禁用表">is_disabled 查看是否禁用表</h4>
+
+<h4 id="is-enabled-查看是否启用表">is_enabled 查看是否启用表</h4>
+
+<h2 id="dml">dml</h2>
+
+<h4 id="scan">scan</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"></code></pre></div>
+<p>append, count, delete, deleteall, get, get_counter, incr, put, truncate, truncate_preserve</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"></code></pre></div></article>
+
+      
+<div class="book-footer justify-end">
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Cli/Shell.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#hbase-shell">hbase shell</a>
+<ul>
+<li><a href="#基础">基础</a>
+<ul>
+<li><a href="#启动-退出">启动 退出</a></li>
+<li><a href="#帮助">帮助</a></li>
+<li><a href="#启用-debug">启用 debug</a></li>
+</ul></li>
+<li><a href="#命令">命令</a>
+<ul>
+<li><a href="#ddl">ddl</a>
+<ul>
+<li><a href="#list-列出所有表">list 列出所有表</a></li>
+<li><a href="#create-创建表">create 创建表</a></li>
+<li><a href="#describe-查看表结构">describe 查看表结构</a></li>
+<li><a href="#alter-修改表结构">alter 修改表结构</a></li>
+<li><a href="#exists-检查表是否存在">exists 检查表是否存在</a></li>
+<li><a href="#disable-禁用表">disable 禁用表</a></li>
+<li><a href="#enable-启用表">enable 启用表</a></li>
+<li><a href="#drop-删除表">drop 删除表</a></li>
+<li><a href="#is-disabled-查看是否禁用表">is_disabled 查看是否禁用表</a></li>
+<li><a href="#is-enabled-查看是否启用表">is_enabled 查看是否启用表</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#dml">dml</a>
+<ul>
+<li>
+<ul>
+<li><a href="#scan">scan</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

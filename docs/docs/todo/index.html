@@ -2,10 +2,9 @@
 <html lang="en">
 
 <head>
-	<meta name="generator" content="Hugo 0.57.2" />
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HBase | HBase</title>
+<title>Todo | HBase</title>
 
 
 <link rel="stylesheet" href="/HBase/book.min.79de1f7861b0c98f453c0a93bebf3608a280809e417787746c373699639900d7.css">
@@ -16,7 +15,6 @@
 <link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
 
 
-<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/index.xml" title="HBase" />
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -46,7 +44,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   <style>
-  nav ul a[href$="\2fHBase\2f "] {
+  nav ul a[href$="\2fHBase\2f docs\2ftodo\2f "] {
       color: #004ed0;
   }
   </style>
@@ -96,28 +94,49 @@ https://github.com/alex-shpak/hugo-book
   <label for="menu-control">
     <img src="/HBase/svg/menu.svg" alt="Menu" />
   </label>
-  <strong>HBase</strong>
+  <strong>Todo</strong>
 </header>
 
       
-<article class="markdown"><ul>
-<li><a href="https://www.cloudera.com/documentation/enterprise/5-5-x/categories/hub.html">List of Cloudera Documentation Categories </a></li>
-</ul>
+<article class="markdown">
+
+<h2 id="org-apache-hadoop-hbase-io-hfile-hfile">org.apache.hadoop.hbase.io.hfile.HFile</h2>
+
+<p>./hbase
+ org.apache.hadoop.hbase.io.hfile.HFile -m -f /hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3</p>
+
+<p>Block
+ index size as per heapsize: 704</p>
+
+<p>reader=/hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3,</p>
+
+<pre><code>compression=snappy,
+
+cacheConf=CacheConfig:disabled,
+
+firstKey=a0000000be3d27a5a11d203f798781a9/Toutiao:ClickViewTS/1465783628056/Put,
+
+lastKey=a80072cbf409d04542f272446d4b65a4/Toutiao:ClickViewTS/1465776679416/Put,
+
+avgKeyLen=62,
+
+avgValueLen=93,
+
+entries=6451829,
+
+length=698454846
+</code></pre>
+
+<p>hbase org.apache.hadoop.hbase.mapreduce.Driver
+&hellip;&hellip;</p>
 </article>
 
       
-<div class="book-footer justify-between">
-  
-  <div>
-    
-    <a href="https://github.com/hello-world-example/HBase/commit/e7622dc6c2080acd7eeef3b3411094aa9372c62f" title='Last modified Dec 26, 2019 by 杨凯彬' target="_blank" rel="noopener">
-      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Dec 26, 2019
-    </a>
-  </div>
+<div class="book-footer justify-end">
   
   
   <div>
-    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/_index.md" target="_blank" rel="noopener">
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/todo.md" target="_blank" rel="noopener">
       <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
     </a>
   </div>
@@ -130,6 +149,17 @@ https://github.com/alex-shpak/hugo-book
 
     
   
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#org-apache-hadoop-hbase-io-hfile-hfile">org.apache.hadoop.hbase.io.hfile.HFile</a></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
 
 
 

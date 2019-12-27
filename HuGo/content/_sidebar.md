@@ -2,10 +2,12 @@
 headless: true
 ---
 
-- [简介]({{< relref "/" >}})
+- **Install**
+  - [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}})  
+- **Cli**
+  - [Shell]({{< relref "/docs/Cli/Shell.md" >}})  
+- **Core**
+  - [RowKey]({{< relref "/docs/Core/RowKey.md" >}})  
+- [杂项]({{< relref "/docs/Other.md" >}})
 
-- **示例**
-  - [默认带目录]({{< relref "/docs/with-toc.md" >}})
-  - [设置不带目录]({{< relref "/docs/without-toc.md" >}})
-  - [特有功能]({{< relref "/docs/shortcodes.md" >}})  
 

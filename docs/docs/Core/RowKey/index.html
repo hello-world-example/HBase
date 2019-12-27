@@ -2,10 +2,9 @@
 <html lang="en">
 
 <head>
-	<meta name="generator" content="Hugo 0.57.2" />
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HBase | HBase</title>
+<title>Row Key | HBase</title>
 
 
 <link rel="stylesheet" href="/HBase/book.min.79de1f7861b0c98f453c0a93bebf3608a280809e417787746c373699639900d7.css">
@@ -16,7 +15,6 @@
 <link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
 
 
-<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/index.xml" title="HBase" />
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -46,7 +44,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   <style>
-  nav ul a[href$="\2fHBase\2f "] {
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2fRowKey\2f "] {
       color: #004ed0;
   }
   </style>
@@ -96,28 +94,44 @@ https://github.com/alex-shpak/hugo-book
   <label for="menu-control">
     <img src="/HBase/svg/menu.svg" alt="Menu" />
   </label>
-  <strong>HBase</strong>
+  <strong>Row Key</strong>
 </header>
 
       
-<article class="markdown"><ul>
-<li><a href="https://www.cloudera.com/documentation/enterprise/5-5-x/categories/hub.html">List of Cloudera Documentation Categories </a></li>
+<article class="markdown">
+
+<h1 id="rowkey-设计">Rowkey 设计</h1>
+
+<ul>
+<li>Rowkey 是一段二进制码流，<strong>最大长度为64KB</strong></li>
+<li>Rowkey 以<strong>字典顺序排序</strong>，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123</li>
+<li>查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据</li>
+<li>按单个Rowkey检索的效率是很高的，耗时在1毫秒以下</li>
+</ul>
+
+<h2 id="设计原则">设计原则</h2>
+
+<h3 id="长度原则">长度原则</h3>
+
+<h3 id="散列原则">散列原则</h3>
+
+<h3 id="唯一性">唯一性</h3>
+
+<h2 id="read-more">Read More</h2>
+
+<ul>
+<li><a href="http://www.chepoo.com/hbase-rowkey-design.html">HBase Rowkey设计</a></li>
+<li><a href="http://www.chepoo.com/rowkey-design-of-hbase.html">HBase的RowKey设计原则</a></li>
+<li><a href="http://www.cnblogs.com/bdifn/p/3801737.html">HBase Rowkey的散列与预分区设计</a></li>
 </ul>
 </article>
 
       
-<div class="book-footer justify-between">
-  
-  <div>
-    
-    <a href="https://github.com/hello-world-example/HBase/commit/e7622dc6c2080acd7eeef3b3411094aa9372c62f" title='Last modified Dec 26, 2019 by 杨凯彬' target="_blank" rel="noopener">
-      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Dec 26, 2019
-    </a>
-  </div>
+<div class="book-footer justify-end">
   
   
   <div>
-    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/_index.md" target="_blank" rel="noopener">
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/RowKey.md" target="_blank" rel="noopener">
       <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
     </a>
   </div>
@@ -130,6 +144,23 @@ https://github.com/alex-shpak/hugo-book
 
     
   
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#rowkey-设计">Rowkey 设计</a>
+<ul>
+<li><a href="#设计原则">设计原则</a>
+<ul>
+<li><a href="#长度原则">长度原则</a></li>
+<li><a href="#散列原则">散列原则</a></li>
+<li><a href="#唯一性">唯一性</a></li>
+</ul></li>
+<li><a href="#read-more">Read More</a></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
 
 
 
