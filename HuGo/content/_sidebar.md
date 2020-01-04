@@ -2,12 +2,18 @@
 headless: true
 ---
 
-- **Install**
-  - [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}})  
-- **Cli**
-  - [Shell]({{< relref "/docs/Cli/Shell.md" >}})  
-- **Core**
-  - [RowKey]({{< relref "/docs/Core/RowKey.md" >}})  
-- [杂项]({{< relref "/docs/Other.md" >}})
+* **Install**
+  * [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}})  
+  * [HBase 配置简介]({{< relref "/docs/Install/Properties.md" >}})  
+* **Cli**
+  * [Shell]({{< relref "/docs/Cli/Shell.md" >}})  
+* **Core**
+  * [RowKey]({{< relref "/docs/Core/RowKey.md" >}})  
+  * [HBase 列族配置]({{< relref "/docs/Core/Family-Properties.md" >}})  
+  * [HBase 内置过滤器简介]({{< relref "/docs/Core/Filter.md" >}})  
+* **Action**
+  * [HFile Tool 查看 HFile]({{< relref "/docs/Action/Hfile-Pretty-Printer.md" >}})
+  * [如何使用 Bulk Loading]({{< relref "/docs/Action/How-To-Use-Hbase-Bulk-Loading.md" >}})  
+* [杂项]({{< relref "/docs/Other.md" >}})
 
 

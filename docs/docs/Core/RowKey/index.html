@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Row Key | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.87f3f8041b440b09c403caabe78035c2b77bb910f77e115aeb4fcfb186dc0c30.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2fRowKey\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a><br /></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a><br /></li>
+</ul></li>
+<li><strong>Cli</strong>
+
+<ul>
+<li><a href="/HBase/docs/Cli/Shell/">Shell</a><br /></li>
+</ul></li>
+<li><strong>Core</strong>
+
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a><br /></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">HBase 列族配置</a><br /></li>
+<li><a href="/HBase/docs/Core/Filter/">HBase 内置过滤器简介</a><br /></li>
+</ul></li>
+<li><strong>Action</strong>
+
+<ul>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a><br /></li>
+</ul></li>
+<li><a href="/HBase/docs/Other/">杂项</a></li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Row Key</strong>
+</header>
+
+      
+<article class="markdown">
+
+<h1 id="rowkey-设计">Rowkey 设计</h1>
+
+<ul>
+<li>Rowkey 是一段二进制码流，<strong>最大长度为64KB</strong></li>
+<li>Rowkey 以<strong>字典顺序排序</strong>，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123</li>
+<li>查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据</li>
+<li>按单个Rowkey检索的效率是很高的，耗时在1毫秒以下</li>
+</ul>
+
+<h2 id="设计原则">设计原则</h2>
+
+<h3 id="长度原则">长度原则</h3>
+
+<h3 id="散列原则">散列原则</h3>
+
+<h3 id="唯一性">唯一性</h3>
+
+<h2 id="read-more">Read More</h2>
+
+<ul>
+<li><a href="http://www.chepoo.com/hbase-rowkey-design.html">HBase Rowkey设计</a></li>
+<li><a href="http://www.chepoo.com/rowkey-design-of-hbase.html">HBase的RowKey设计原则</a></li>
+<li><a href="http://www.cnblogs.com/bdifn/p/3801737.html">HBase Rowkey的散列与预分区设计</a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-between">
+  
+  <div>
+    
+    <a href="https://github.com/hello-world-example/HBase/commit/90d23dda6f59920cdf6dda805d1739f440b066bb" title='Last modified Dec 27, 2019 by 杨凯彬' target="_blank" rel="noopener">
+      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Dec 27, 2019
+    </a>
+  </div>
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/RowKey.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#rowkey-设计">Rowkey 设计</a>
+<ul>
+<li><a href="#设计原则">设计原则</a>
+<ul>
+<li><a href="#长度原则">长度原则</a></li>
+<li><a href="#散列原则">散列原则</a></li>
+<li><a href="#唯一性">唯一性</a></li>
+</ul></li>
+<li><a href="#read-more">Read More</a></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

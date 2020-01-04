@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Docs on HBase</title>
+    <link>https://hello-world-example.github.io/HBase/docs/</link>
+    <description>Recent content in Docs on HBase</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	<atom:link href="https://hello-world-example.github.io/HBase/docs/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Action/Hfile-Pretty-Printer/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Action/Hfile-Pretty-Printer/</guid>
+      <description>通过 “HFile Tool” 查看 HFile文件内容 查看 HFile 内容的文本版本, 你可以使用org.apache.hadoop.hbase.io.hfile.HFile工具。输入以下命令查看使用帮助。
+$ hbase org.apache.hadoop.hbase.io.hfile.HFile usage: HFile [-a] [-b] [-e] [-f &amp;lt;arg&amp;gt; | -r &amp;lt;arg&amp;gt;] [-h] [-k] [-m] [-p] [-s] [-v] [-w &amp;lt;arg&amp;gt;] -a,--checkfamily Enable family check -b,--printblocks Print block index meta data -e,--printkey Print keys -f,--file &amp;lt;arg&amp;gt; File to scan. Pass full-path; e.g. hdfs://a:9000/hbase/hbase:meta/12/34 -h,--printblockheaders Print block headers for each block. -k,--checkrow Enable row order check; looks for out-of-order keys -m,--printmeta Print meta data of file -p,--printkv Print key/value pairs -r,--region &amp;lt;arg&amp;gt; Region to scan.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/</guid>
+      <description>如何使用 Bulk Loading  原文地址：How-to: Use HBase Bulk Loading, and Why
+ Apache HBase 为您提供对大数据的 随机、实时、读/写 访问，如何有效地将数据迁移到到 HBase 呢？ 用户可以尝试通过 客户端API 或使用 MapReduce作业TableOutputFormat输出格式，但这些方法存在一些问题，下面会说到。 HBase bulk loading(批量加载) 功能更易于使用，并且可以更快地插入相同数量的数据
+本博客文章将介绍 bulk loading(批量加载) 功能的基本概念，介绍两种使用场景，并展示了两个例子。
+ Bulk Loading 概述 如果您使用传统方式（API、MapReduce）会有下面这些问题，bulk loading(批量加载) 可能是您的正确选择：
+ 您需要调整 MemStore 来获取更大的内存。 您需要使用更大的WAL或完全绕过它们。 您的压缩和flush队列数百个。 您的GC失控，因为您的插入数据量很大。 导入数据时，您的延迟超出SLA（Service-Level Agreement，《SRE：Google运维解密》一书中有介绍）  大多数这些症状通常被称为“成长中的痛苦”（growing pains）。使用批量加载可以帮助您避免它们。
+在HBase中，bulk loading 是准备和加载HFiles（HBase自己的文件格式）到RegionServers中的过程， 因此绕过了写入路径并完全避免了上述那些问题。此过程与ETL类似，如下所示：
+1.从资源中提取数据，通常是文本文件或其他数据库 HBase不管理数据提取这部分过程。 换句话说，你不能通过直接从 MySQL 读取 HFiles 来告诉HBase准备HFile，相反，你必须以自己的方式来完成数据抽取。 例如，您可以在一个表上运行mysqldump并将结果文件上传到HDFS，或者获取您的Apache HTTP日志文件。 无论如何，在下一步之前，您的数据需要上传到 HDFS。
+ 实际上在本地磁盘也可以，如果数据量一台机器可以承受的话； Hadoop 的 默认文件系统是本地文件系统 &amp;ldquo;fs.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</guid>
+      <description>hbase shell 基础 启动 退出 ./bin/hbase shellhbase(main):001:0&amp;gt; exit 帮助 命令行帮助
+./bin/hbase shell -h shell 命令帮助
+hbase(main):001:0&amp;gt; help 启用 debug ./bin/hbase shell -d# 启动或者关闭 debug 模式 hbase(main):001:0&amp;gt; debug # 查看是否启动 debug 模式 hbase(main):001:0&amp;gt; debug? 命令 ddl list 列出所有表 表名支持 正则匹配
+hbase&amp;gt; list hbase&amp;gt; list &amp;#39;abc.*&amp;#39; create 创建表 describe 查看表结构 alter 修改表结构 exists 检查表是否存在 disable 禁用表 enable 启用表 drop 删除表 is_disabled 查看是否禁用表 is_enabled 查看是否启用表 dml scan  append, count, delete, deleteall, get, get_counter, incr, put, truncate, truncate_preserve</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/Family-Properties/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/Family-Properties/</guid>
+      <description>HBase 列族配置 创建一个测试表（test），列族名为 f
+hbase&amp;gt; create &amp;#39;test&amp;#39;, {NAME =&amp;gt; &amp;#39;f&amp;#39;} 默认属性如下：
+hbase&amp;gt; describe &amp;#39;test&amp;#39; { NAME =&amp;gt; &amp;#39;f&amp;#39;, BLOOMFILTER =&amp;gt; &amp;#39;ROW&amp;#39;, VERSIONS =&amp;gt; &amp;#39;1&amp;#39;, MIN_VERSIONS =&amp;gt; &amp;#39;0&amp;#39;, KEEP_DELETED_CELLS =&amp;gt; &amp;#39;FALSE&amp;#39;, DATA_BLOCK_ENCODING =&amp;gt; &amp;#39;NONE&amp;#39;, COMPRESSION =&amp;gt; &amp;#39;NONE&amp;#39;, TTL =&amp;gt; &amp;#39;FOREVER&amp;#39;, BLOCKCACHE =&amp;gt; &amp;#39;true&amp;#39;, BLOCKSIZE =&amp;gt; &amp;#39;65536&amp;#39;, IN_MEMORY =&amp;gt; &amp;#39;false&amp;#39;, REPLICATION_SCOPE =&amp;gt; &amp;#39;0&amp;#39; }  基本属性 BLOOMFILTER(布隆过滤器) 布隆过滤器 可以判断数据不存在，当判断结果存在时，数据可能真的存在，也可能不存在。可选的值有 三个 NONE, ROW (default), ROWCOL。
+当开启 布隆过滤器 时，可以判断要查询的数据不存在在表中，从而避免查表。
+行级（ROW）布隆过滤器在数据块里检查特定行键是否不存在，列标识符级（ROWCOL）布隆过滤器检查行和列标识符联合体是否不存在。ROWCOL布隆过滤器的开销高于ROW布隆过滤器。
+VERSIONS(Cell数据版本) 0.96版本默认是3个， 0.98版本之后是1， 要根据业务来划分，版本是历史记录，版本增多意味空间消耗。</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/Filter/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/Filter/</guid>
+      <description>HBase 内置过滤器简介 HBase 的过滤器可以让我们在查询中添加更多的限制条件 来减少查询得到的数据量，从而帮助用户提高处理表数据的效率。 所有的过滤器都在服务端生效，使被过滤掉的数据不会被传送到客户端。
+Filter 的继承结构  Filter  FilterBase  CompareFilter  RowFilter FamilyFilter QualifierFilter ValueFilter DependentColumnFilter  SingleColumnValueFilter  SingleColumnValueExcludeFilter  PrefixFilter PageFilter (*.fiter) KeyOnlyFilter FirstKeyOnlyFilter  FirstKeyValueMatchingQualifiersFilter  InclusiveStopFilter TimestampsFilter ColumnCountGetFilter ColumnPaginationFilter ColumnPrefixFilter RandomRowFilter ColumnRangeFilter MultipleColumnPrefixFilter MultiRowRangeFilter FuzzyRowFilter SkipFilter WhileMatchFilter  FilterList FilterWrapper   CompareFilter CompareFilter 返回匹配的行。
+构造函数：
+public CompareFilter(final CompareOp compareOp, final ByteArrayComparable comparator) { this.compareOp = compareOp; this.comparator = comparator; } 比较运算符：</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</guid>
+      <description> Rowkey 设计  Rowkey 是一段二进制码流，最大长度为64KB Rowkey 以字典顺序排序，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123 查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据 按单个Rowkey检索的效率是很高的，耗时在1毫秒以下  设计原则 长度原则 散列原则 唯一性 Read More  HBase Rowkey设计 HBase的RowKey设计原则 HBase Rowkey的散列与预分区设计  </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Properties/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Properties/</guid>
+      <description>HBase 配置简介 获取 HBase 可配置的选项通常有以下方法：
+ org.apache.hadoop.hbase.HConstants 常量类 hbase-common-x.x.x.jar 根目录下的 hbase-default.xml 配置文件 HMaster Web UI Configuration: http://localhost:16010/conf  Core / Install 以下是让 HBase 启动和运行的重要配置
+hbase.tmp.dir 本地文件系统上的临时目录
+默认 ${java.io.tmpdir}/hbase-${user.name}（/tmp/hbase-${user.name}）, 系统重启会自动清除
+hbase.rootdir HBase 的数据保存目录。 如果是本地文件系统，必须是全路径；如果是 HDFS hdfs://namenode.example.org:9000/hbase
+默认 ${hbase.tmp.dir}/hbase
+hbase.fs.tmp.dir 默认文件系统（HDFS） 上用于暂存临时数据的目录
+默认 /user/${user.name}/hbase-staging
+hbase.bulkload.staging.dir 默认文件系统（HDFS）中的暂存批量加载临时数据目录
+默认 ${hbase.fs.tmp.dir}
+hbase.cluster.distributed 是否在集群模式下运行。 独立模式下的值为false，分布式模式下为true。 如果为false，将在一个JVM中一起运行所有HBase和ZooKeeper守护进程
+默认 false
+hbase.zookeeper.quorum 用逗号分隔的 ZooKeeper 服务器的列表。 例如host1.mydomain.com，host2.mydomain.com，host3.mydomain.com。 默认情况下，独立模式和伪分布式模式 下为localhost。 对于完全分布式模式，应该将其设置为ZooKeeper服务器的完整列表。 如果对hbase-env.sh中HBASE_MANAGES_ZK的设为true，HBase 会把 ZooKeeper 作为群集的一部分 启动（/停止）。 在客户端，常与hbase.zookeeper.clientPort（Zookeeper 端口）配置放在一起使用，并将其作为connectString参数传递给zookeeper构造函数
+默认 localhost</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</guid>
+      <description>单机本地文件系统 # 下载 wget http://mirrors.hust.edu.cn/apache/hbase/stable/hbase-1.2.6-bin.tar.gz vim hbase-1.2.6/conf/hbase-site.xml # 新增 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.rootdir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;file:///opt/data/hbase&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=true 设置true，最好指定 Zookeeper 的数据路劲 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.zookeeper.property.dataDir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;/opt/data/hbase-zookeeper&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=false 设置false，需要再加入以下配置 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.cluster.distributed&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;true&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; vim hbase-1.2.6/conf/hbase-env.sh # 修改 JAVA_HOME， 去掉前面的 #， # export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/ # 修改 HBASE_CLASSPATH ，去掉前面的 # # export HBASE_CLASSPATH=/opt/websuite/hbase-1.2.6 # 默认是 true ，如果使用 外部 Zookeeper ，设置为 false 即可 # export HBASE_MANAGES_ZK=true # 启动 Hbase .</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Other/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Other/</guid>
+      <description> 杂项 《HBase权威指南》 读书笔记 03 客户端API-基础支持 第三种介绍了使用 Java API 对 HBase 进行 CRUD 操作
+ 创建 HTable 代价非常高（需要扫描.META.表）,建议在应用启动的时候创建，如果要使用多个，请使用 HTablePool 为每个线程创建各自的 HTable 实例 所有修改操作只保证 行级别的原子性
+ 随书代码
+  06 可用客户端  在 hbase shell 中使用命令时，表名、列名、查看命令帮助的命令名(help &amp;ldquo;get&amp;rdquo;) 必须用单引号或者双引号进行包裹
+ Master服务器 的 WebUI 默认端口是 60010 （hbase.master.info.port）
+ Region服务器 的 WebUI 默认端口是 60030 （hbase.regionserver.info.port）
+  08 架构  先联系Zookeeper 查找行键？  09 高级用法  KeyValue 存储时先按照行键排序，当列族有多个单元格时再按照列键排序，单元格的多个版本按照时间倒叙排序 尽量将要查询的信息包含在行键中，因为行键的筛选效率最高 HBase 适合高表，不适合宽表   《HBase企业应用开发实战》 读书笔记 04 HBase 表结构设计  表、RowKey、列族 唯一确定一行数据 单元格（Cell） 所在的行是有序的 RowKey是 不可分割的字节 HBase 只能在 Rowkey 上建立索引  </description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/todo/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/todo/</guid>
+      <description>org.apache.hadoop.hbase.io.hfile.HFile ./hbase org.apache.hadoop.hbase.io.hfile.HFile -m -f /hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3
+Block index size as per heapsize: 704
+reader=/hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3,
+compression=snappy, cacheConf=CacheConfig:disabled, firstKey=a0000000be3d27a5a11d203f798781a9/Toutiao:ClickViewTS/1465783628056/Put, lastKey=a80072cbf409d04542f272446d4b65a4/Toutiao:ClickViewTS/1465776679416/Put, avgKeyLen=62, avgValueLen=93, entries=6451829, length=698454846  hbase org.apache.hadoop.hbase.mapreduce.Driver &amp;hellip;&amp;hellip;</description>
+    </item>
+    
+  </channel>
+</rss>

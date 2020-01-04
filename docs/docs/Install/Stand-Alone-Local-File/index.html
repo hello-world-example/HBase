@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stand Alone Local File | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.87f3f8041b440b09c403caabe78035c2b77bb910f77e115aeb4fcfb186dc0c30.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2fInstall\2fStand-Alone-Local-File\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a><br /></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a><br /></li>
+</ul></li>
+<li><strong>Cli</strong>
+
+<ul>
+<li><a href="/HBase/docs/Cli/Shell/">Shell</a><br /></li>
+</ul></li>
+<li><strong>Core</strong>
+
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a><br /></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">HBase 列族配置</a><br /></li>
+<li><a href="/HBase/docs/Core/Filter/">HBase 内置过滤器简介</a><br /></li>
+</ul></li>
+<li><strong>Action</strong>
+
+<ul>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a><br /></li>
+</ul></li>
+<li><a href="/HBase/docs/Other/">杂项</a></li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Stand Alone Local File</strong>
+</header>
+
+      
+<article class="markdown">
+
+<h1 id="单机本地文件系统">单机本地文件系统</h1>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 下载</span>
+wget http://mirrors.hust.edu.cn/apache/hbase/stable/hbase-1.2.6-bin.tar.gz
+
+vim hbase-1.2.6/conf/hbase-site.xml
+<span style="color:#75715e"># 新增</span>
+<span style="color:#75715e">#  &lt;property&gt;</span>
+<span style="color:#75715e">#    &lt;name&gt;hbase.rootdir&lt;/name&gt;</span>
+<span style="color:#75715e">#    &lt;value&gt;file:///opt/data/hbase&lt;/value&gt;</span>
+<span style="color:#75715e">#  &lt;/property&gt;</span>
+#
+<span style="color:#75715e">#  如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=true 设置true，最好指定 Zookeeper 的数据路劲</span>
+<span style="color:#75715e">#  &lt;property&gt;</span>
+<span style="color:#75715e">#    &lt;name&gt;hbase.zookeeper.property.dataDir&lt;/name&gt;</span>
+<span style="color:#75715e">#    &lt;value&gt;/opt/data/hbase-zookeeper&lt;/value&gt;</span>
+<span style="color:#75715e">#  &lt;/property&gt;</span>
+#  
+<span style="color:#75715e">#  如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=false 设置false，需要再加入以下配置</span>
+<span style="color:#75715e">#  &lt;property&gt;</span>
+<span style="color:#75715e">#     &lt;name&gt;hbase.cluster.distributed&lt;/name&gt;</span>
+<span style="color:#75715e">#     &lt;value&gt;true&lt;/value&gt;</span>
+<span style="color:#75715e">#   &lt;/property&gt;</span>
+
+
+vim hbase-1.2.6/conf/hbase-env.sh
+<span style="color:#75715e"># 修改 JAVA_HOME， 去掉前面的 #，</span>
+<span style="color:#75715e"># export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/</span>
+<span style="color:#75715e"># 修改 HBASE_CLASSPATH ，去掉前面的 #</span>
+<span style="color:#75715e"># export HBASE_CLASSPATH=/opt/websuite/hbase-1.2.6</span>
+<span style="color:#75715e"># 默认是 true ，如果使用 外部 Zookeeper ，设置为 false 即可</span>
+<span style="color:#75715e"># export HBASE_MANAGES_ZK=true</span>
+
+<span style="color:#75715e"># 启动 Hbase</span>
+./hbase-1.2.6/bin/start-hbase.sh
+<span style="color:#75715e"># 关闭hbase</span>
+./hbase-1.2.6/bin/stop-hbase.sh
+
+<span style="color:#75715e"># 查看日志</span>
+tail -fn <span style="color:#ae81ff">400</span> hbase-1.2.6/logs/hbase-kail-master-MacBook-Pro.local.out
+
+<span style="color:#75715e"># 进入 hbase shell</span>
+./hbase-1.2.6/bin/hbase shell</code></pre></div>
+<h2 id="webui">WebUI</h2>
+
+<p><a href="http://localhost:16010/master-status">http://localhost:16010/master-status</a></p>
+
+<h2 id="faq">FAQ</h2>
+
+<h3 id="could-not-start-zk-at-requested-port-of-2181-zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</h3>
+
+<p>新增以下配置，</p>
+
+<pre><code>&lt;property&gt;
+    &lt;name&gt;hbase.cluster.distributed&lt;/name&gt;
+    &lt;value&gt;true&lt;/value&gt;
+&lt;/property&gt;
+</code></pre>
+
+<h2 id="read-more">Read More</h2>
+
+<ul>
+<li><a href="http://hbase.apache.org/book.html#quickstart">Quick Start - Standalone HBase</a></li>
+<li><a href="http://abloz.com/hbase/book.html#quickstart">HBase 快速开始</a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-between">
+  
+  <div>
+    
+    <a href="https://github.com/hello-world-example/HBase/commit/90d23dda6f59920cdf6dda805d1739f440b066bb" title='Last modified Dec 27, 2019 by 杨凯彬' target="_blank" rel="noopener">
+      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Dec 27, 2019
+    </a>
+  </div>
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Install/Stand-Alone-Local-File.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#单机本地文件系统">单机本地文件系统</a>
+<ul>
+<li><a href="#webui">WebUI</a></li>
+<li><a href="#faq">FAQ</a>
+<ul>
+<li><a href="#could-not-start-zk-at-requested-port-of-2181-zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</a></li>
+</ul></li>
+<li><a href="#read-more">Read More</a></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>
