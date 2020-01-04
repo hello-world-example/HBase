@@ -12,11 +12,19 @@
     <artifactId>demo-hbase-cdh5</artifactId>
 
     <dependencies>
+
+        <dependency>
+            <groupId>HBase</groupId>
+            <artifactId>demo-hbase-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
-            <version>1.0.0-cdh5.5.2</version>
+            <version>${hbase.cdh5.version}</version>
         </dependency>
+
     </dependencies>
 
 

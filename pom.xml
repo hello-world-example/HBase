@@ -4,13 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>HBase</groupId>
+    <groupId>xyz.kail.demo</groupId>
     <artifactId>HBase</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>demo-hbase-cdh5</module>
         <module>demo-hbase-cdh6</module>
+        <module>demo-hbase-async</module>
+        <module>demo-hbase-core</module>
     </modules>
 
 
@@ -24,15 +26,30 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
+        <!-- HBase 版本 -->
+        <hbase1.version>1.0.0</hbase1.version>
+        <hbase2.version>2.1.0</hbase2.version>
+        <hbase.cdh5.version>1.0.0-cdh5.5.2</hbase.cdh5.version>
+        <hbase.cdh6.version>2.1.0-cdh6.3.2</hbase.cdh6.version>
+
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.10</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <repositories>
