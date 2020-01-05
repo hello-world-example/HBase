@@ -37,14 +37,11 @@ $ hbase org.apache.hadoop.hbase.io.hfile.HFile usage: HFile [-a] [-b] [-e] [-f &
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Cli/HBase-Shell/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/Cli/Shell/</guid>
-      <description>hbase shell 基础 启动 退出 ./bin/hbase shellhbase(main):001:0&amp;gt; exit 帮助 命令行帮助
-./bin/hbase shell -h shell 命令帮助
-hbase(main):001:0&amp;gt; help 启用 debug ./bin/hbase shell -d# 启动或者关闭 debug 模式 hbase(main):001:0&amp;gt; debug # 查看是否启动 debug 模式 hbase(main):001:0&amp;gt; debug? 命令 ddl list 列出所有表 表名支持 正则匹配
-hbase&amp;gt; list hbase&amp;gt; list &amp;#39;abc.*&amp;#39; create 创建表 describe 查看表结构 alter 修改表结构 exists 检查表是否存在 disable 禁用表 enable 启用表 drop 删除表 is_disabled 查看是否禁用表 is_enabled 查看是否启用表 dml scan  append, count, delete, deleteall, get, get_counter, incr, put, truncate, truncate_preserve</description>
+      <guid>https://hello-world-example.github.io/HBase/docs/Cli/HBase-Shell/</guid>
+      <description>hbase shell 基础命令 # 进入 ᐅ ./bin/hbase shell # 退出 hbase&amp;gt; exit # 查看帮助 ᐅ ./bin/hbase shell -h # 或 hbase&amp;gt; help hbase&amp;gt; help &amp;#39;group name&amp;#39; hbase&amp;gt; help &amp;#39;command&amp;#39; # Debug 模式 ᐅ ./bin/hbase shell -d # 启动或者关闭 debug 模式 hbase&amp;gt; debug # 查看是否启动 debug 模式 hbase&amp;gt; debug? General ✔️ # status == status &amp;#39;summary&amp;#39; hbase&amp;gt; status 1 active master, 0 backup masters, 1 servers, 0 dead, 2.0000 average load hbase&amp;gt; status &amp;#39;simple&amp;#39; hbase&amp;gt; status &amp;#39;detailed&amp;#39; hbase&amp;gt; status &amp;#39;replication&amp;#39; # 表操作示使用文档 hbase&amp;gt; table_help # hbase&amp;gt; version 1.</description>
     </item>
     
     <item>
@@ -102,6 +99,19 @@ hbase.cluster.distributed 是否在集群模式下运行。 独立模式下的�
 默认 false
 hbase.zookeeper.quorum 用逗号分隔的 ZooKeeper 服务器的列表。 例如host1.mydomain.com，host2.mydomain.com，host3.mydomain.com。 默认情况下，独立模式和伪分布式模式 下为localhost。 对于完全分布式模式，应该将其设置为ZooKeeper服务器的完整列表。 如果对hbase-env.sh中HBASE_MANAGES_ZK的设为true，HBase 会把 ZooKeeper 作为群集的一部分 启动（/停止）。 在客户端，常与hbase.zookeeper.clientPort（Zookeeper 端口）配置放在一起使用，并将其作为connectString参数传递给zookeeper构造函数
 默认 localhost</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Docker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Docker/</guid>
+      <description>Docker 搭建单机 CDH 环境   QuickStarts for CDH 5.13 官方下载地址
+ Cloudera Docker Container 官方文档
+ cloudera/quickstart 仓库
+   CDH 端口  https://blog.csdn.net/Brady_heitong/article/details/79404331
+    服务名称  账户     80     2181 Zookeeper    3306 MySQL root/cloudera   7180 Cloudera Manager cloudera/cloudera   8888 Hue cloudera/cloudera        8983 Solr HTTP Port    8984 Solr Admin Port         9092 Kafka         60000 HBase Master    60010 HBase Master Web UI    60020 HBase RegionServer Port    60030 HBase RegionServer Web UI port     使用 Docker 安装   MAC 设置 Docker 内存   # 镜像有 5G， 下载比较慢 # wget https://downloads.</description>
     </item>
     
     <item>

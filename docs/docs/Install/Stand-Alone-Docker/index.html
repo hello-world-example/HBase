@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stand Alone Docker | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.87f3f8041b440b09c403caabe78035c2b77bb910f77e115aeb4fcfb186dc0c30.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2fInstall\2fStand-Alone-Docker\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Docker/">Docker 搭建单机 CDH 环境</a><br /></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a><br /></li>
+</ul></li>
+<li><strong>Cli</strong>
+
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a><br /></li>
+</ul></li>
+<li><strong>Core</strong>
+
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a><br /></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">HBase 列族配置</a><br /></li>
+<li><a href="/HBase/docs/Core/Filter/">HBase 内置过滤器简介</a><br /></li>
+</ul></li>
+<li><strong>Action</strong>
+
+<ul>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a><br /></li>
+</ul></li>
+<li><a href="/HBase/docs/Other/">杂项</a></li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Stand Alone Docker</strong>
+</header>
+
+      
+<article class="markdown">
+
+<h1 id="docker-搭建单机-cdh-环境">Docker 搭建单机 CDH 环境</h1>
+
+<blockquote>
+<ul>
+<li><p><a href="https://www.cloudera.com/downloads/quickstart_vms/5-13.html">QuickStarts for CDH 5.13</a> 官方下载地址</p></li>
+
+<li><p><a href="https://docs.cloudera.com/documentation/enterprise/5-13-x/topics/quickstart_docker_container.html">Cloudera Docker Container 官方文档</a></p></li>
+
+<li><p><a href="https://hub.docker.com/r/cloudera/quickstart">cloudera/quickstart 仓库</a></p></li>
+</ul>
+</blockquote>
+
+<h2 id="cdh-端口">CDH 端口</h2>
+
+<blockquote>
+<p><a href="https://blog.csdn.net/Brady_heitong/article/details/79404331">https://blog.csdn.net/Brady_heitong/article/details/79404331</a></p>
+</blockquote>
+
+<table>
+<thead>
+<tr>
+<th>服务名称</th>
+<th></th>
+<th>账户</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>80</td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>2181</td>
+<td><strong>Zookeeper</strong></td>
+<td></td>
+</tr>
+
+<tr>
+<td>3306</td>
+<td><strong>MySQL</strong></td>
+<td>root/cloudera</td>
+</tr>
+
+<tr>
+<td>7180</td>
+<td>Cloudera Manager</td>
+<td>cloudera/cloudera</td>
+</tr>
+
+<tr>
+<td>8888</td>
+<td>Hue</td>
+<td>cloudera/cloudera</td>
+</tr>
+
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>8983</td>
+<td>Solr HTTP Port</td>
+<td></td>
+</tr>
+
+<tr>
+<td>8984</td>
+<td>Solr Admin Port</td>
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>9092</td>
+<td><strong>Kafka</strong></td>
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>60000</td>
+<td><strong>HBase Master</strong></td>
+<td></td>
+</tr>
+
+<tr>
+<td>60010</td>
+<td><strong>HBase Master Web UI</strong></td>
+<td></td>
+</tr>
+
+<tr>
+<td>60020</td>
+<td>HBase RegionServer Port</td>
+<td></td>
+</tr>
+
+<tr>
+<td>60030</td>
+<td>HBase RegionServer Web UI port</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="使用-docker-安装">使用 Docker 安装</h2>
+
+<blockquote>
+<ul>
+<li><a href="https://docs.docker.com/docker-for-mac/">MAC 设置 Docker 内存</a></li>
+</ul>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 镜像有 5G， 下载比较慢</span>
+<span style="color:#75715e"># wget https://downloads.cloudera.com/demo_vm/docker/cloudera-quickstart-vm-5.13.0-0-beta-docker.tar.gz</span>
+ᐅ docker pull cloudera/quickstart
+
+<span style="color:#75715e"># 启动容器</span>
+ᐅ docker run -d <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		--hostname<span style="color:#f92672">=</span>quickstart.cloudera <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		--privileged<span style="color:#f92672">=</span>true <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		--name<span style="color:#f92672">=</span>cdh-5.13 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">81</span>:80 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">2181</span>:2181 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">9092</span>:9092 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">60010</span>:60010 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">60000</span>:60000 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">8888</span>:8888 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">7180</span>:7180 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		cloudera/quickstart bash -c <span style="color:#e6db74">&#34;while true; do echo noting; sleep 1; done&#34;</span>
+		<span style="color:#75715e"># /usr/bin/docker-quickstart</span>
+
+<span style="color:#75715e"># 进入容器</span>
+ᐅ docker exec -it cdh-5.13 bash
+
+<span style="color:#75715e"># 查看服务状态</span>
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service --status-all
+<span style="color:#75715e"># 查看服务名</span>
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ cat /usr/bin/docker-quickstart
+
+<span style="color:#75715e"># 启动关注的服务</span>
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service zookeeper-server start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hadoop-hdfs-datanode start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hadoop-hdfs-journalnode start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hadoop-hdfs-namenode start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hadoop-hdfs-secondarynamenode start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hbase-master start
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ service hbase-regionserver start
+
+		
+<span style="color:#75715e"># 默认是没有开启 CM 服务的，需要手动开启（默认账户： cloudera/cloudera ）</span>
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ sudo /home/cloudera/cloudera-manager --force --express</code></pre></div></article>
+
+      
+<div class="book-footer justify-end">
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Install/Stand-Alone-Docker.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+<ul>
+<li><a href="#docker-搭建单机-cdh-环境">Docker 搭建单机 CDH 环境</a>
+<ul>
+<li><a href="#cdh-端口">CDH 端口</a></li>
+<li><a href="#使用-docker-安装">使用 Docker 安装</a></li>
+</ul></li>
+</ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

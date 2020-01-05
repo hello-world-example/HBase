@@ -3,10 +3,11 @@ headless: true
 ---
 
 * **Install**
-  * [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}})  
+  * [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}}) 
+  * [Docker 搭建单机 CDH 环境]({{< relref "/docs/Install/Stand-Alone-Docker.md" >}})  
   * [HBase 配置简介]({{< relref "/docs/Install/Properties.md" >}})  
 * **Cli**
-  * [Shell]({{< relref "/docs/Cli/Shell.md" >}})  
+  * [hbase shell]({{< relref "/docs/Cli/HBase-Shell.md" >}})  
 * **Core**
   * [RowKey]({{< relref "/docs/Core/RowKey.md" >}})  
   * [HBase 列族配置]({{< relref "/docs/Core/Family-Properties.md" >}})  
