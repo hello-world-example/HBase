@@ -5,34 +5,12 @@
 > - [Cloudera Docker Container 官方文档](https://docs.cloudera.com/documentation/enterprise/5-13-x/topics/quickstart_docker_container.html)
 > - [cloudera/quickstart 仓库](https://hub.docker.com/r/cloudera/quickstart)
 
-## CDH 端口
-
->  https://blog.csdn.net/Brady_heitong/article/details/79404331
-
-
-| 服务名称 |                                | 账户              |
-| -------- | ------------------------------ | ----------------- |
-| 80       |                                |                   |
-| 2181     | **Zookeeper**                  |                   |
-| 3306     | **MySQL**                      | root/cloudera     |
-| 7180     | Cloudera Manager               | cloudera/cloudera |
-| 8888     | Hue                            | cloudera/cloudera |
-|          |                                |                   |
-| 8983     | Solr HTTP Port                 |                   |
-| 8984     | Solr Admin Port                |                   |
-|          |                                |                   |
-| 9092     | **Kafka**                      |                   |
-|          |                                |                   |
-| 60000    | **HBase Master**               |                   |
-| 60010    | **HBase Master Web UI**        |                   |
-| 60020    | HBase RegionServer Port        |                   |
-| 60030    | HBase RegionServer Web UI port |                   |
-
 
 
 ## 使用 Docker 安装
 
 > - [MAC 设置 Docker 内存](https://docs.docker.com/docker-for-mac/)
+> - 端口描述详见 [Port]({{< relref "/docs/Core/Port.md" >}})
 
 ```bash
 # 镜像有 5G， 下载比较慢

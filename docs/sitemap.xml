@@ -4,7 +4,7 @@
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/_sidebar/</loc>
-    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
+    <lastmod>2020-01-05T23:26:23+08:00</lastmod>
   </url>
   
   <url>
@@ -33,6 +33,11 @@
   </url>
   
   <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Core/Port/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</loc>
     <priority>0</priority>
   </url>
@@ -43,7 +48,12 @@
   </url>
   
   <url>
-    <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Docker/</loc>
+    <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-By-Docker/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-CDH-Docker/</loc>
     <priority>0</priority>
   </url>
   
@@ -68,7 +78,7 @@
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/</loc>
-    <lastmod>2019-12-27T14:55:46+08:00</lastmod>
+    <lastmod>2020-01-05T23:26:23+08:00</lastmod>
   </url>
   
 </urlset>

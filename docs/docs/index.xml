@@ -72,6 +72,15 @@ public CompareFilter(final CompareOp compareOp, final ByteArrayComparable compar
     
     <item>
       <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/Port/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/Port/</guid>
+      <description>常用端口    端口 描述       2181 Zookeeper 端口           8080 HBase REST Port hbase.rest.port    16000 HBase Master hbase.master.port 1.0 之前 60000   16010 HBase Master Web UI port hbase.master.info.port 1.0 之前 60010   16020 HBase RegionServer Port hbase.regionserver.port 1.0 之前 60020   16030 HBase RegionServer Web UI port hbase.</description>
+    </item>
+    
+    <item>
+      <title></title>
       <link>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -103,15 +112,25 @@ hbase.zookeeper.quorum 用逗号分隔的 ZooKeeper 服务器的列表。 例如
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Docker/</link>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-By-Docker/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Docker/</guid>
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-By-Docker/</guid>
+      <description>Docker 安装 HBase  端口描述详见 Port
+可选
+-p 8084:8080 -p 8085:8085 -p 9090:9090 -p 9095:9095  $ docker run -d \  -p 2181:2181 \  -p 8084:8080 \  -p 8085:8085 \  -p 16000:16000 \  -p 16010:16010 \  -p 16020:16020 \  -p 16030:16030 \  --name hbase \  harisekhon/hbase # 启动 HBase REST API $ docker exec -it hbase bash # 不加端口的情况下，端口默认为8080 $$ hbase-daemon.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-CDH-Docker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-CDH-Docker/</guid>
       <description>Docker 搭建单机 CDH 环境   QuickStarts for CDH 5.13 官方下载地址
  Cloudera Docker Container 官方文档
  cloudera/quickstart 仓库
-   CDH 端口  https://blog.csdn.net/Brady_heitong/article/details/79404331
-    服务名称  账户     80     2181 Zookeeper    3306 MySQL root/cloudera   7180 Cloudera Manager cloudera/cloudera   8888 Hue cloudera/cloudera        8983 Solr HTTP Port    8984 Solr Admin Port         9092 Kafka         60000 HBase Master    60010 HBase Master Web UI    60020 HBase RegionServer Port    60030 HBase RegionServer Web UI port     使用 Docker 安装   MAC 设置 Docker 内存   # 镜像有 5G， 下载比较慢 # wget https://downloads.</description>
+   使用 Docker 安装   MAC 设置 Docker 内存 端口描述详见 Port   # 镜像有 5G， 下载比较慢 # wget https://downloads.cloudera.com/demo_vm/docker/cloudera-quickstart-vm-5.13.0-0-beta-docker.tar.gz ᐅ docker pull cloudera/quickstart # 启动容器 ᐅ docker run -d \ 	--hostname=quickstart.cloudera \ 	--privileged=true \ 	--name=cdh-5.13 \ 	-p 81:80 \ 	-p 2181:2181 \ 	-p 9092:9092 \ 	-p 60010:60010 \ 	-p 60000:60000 \ 	-p 8888:8888 \ 	-p 7180:7180 \ 	cloudera/quickstart bash -c &amp;#34;while true; do echo noting; sleep 1; done&amp;#34; # /usr/bin/docker-quickstart # 进入容器 ᐅ docker exec -it cdh-5.</description>
     </item>
     
     <item>
