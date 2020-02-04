@@ -2,7 +2,7 @@ package xyz.kail.demo.hbase.cdh5.dbversion;
 
 import lombok.Cleanup;
 import org.apache.hadoop.hbase.client.Connection;
-import xyz.kail.demo.hbase.core.util.HBaseUtils;
+import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 import java.io.IOException;
 

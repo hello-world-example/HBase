@@ -2,14 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>xyz.kail.demo</groupId>
         <artifactId>HBase</artifactId>
+        <groupId>xyz.kail.demo</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>demo-hbase-cdh5</artifactId>
+    <artifactId>demo-hbase-server</artifactId>
+
+    <properties>
+        <hbase.version>1.0.0</hbase.version>
+    </properties>
 
     <dependencies>
 
@@ -21,11 +25,9 @@
 
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.cdh5.version}</version>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
         </dependency>
-
     </dependencies>
-
 
 </project>
