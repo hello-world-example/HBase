@@ -85,7 +85,9 @@ public CompareFilter(final CompareOp compareOp, final ByteArrayComparable compar
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</guid>
-      <description> Rowkey 设计  Rowkey 是一段二进制码流，最大长度为64KB Rowkey 以字典顺序排序，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123 查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据 按单个Rowkey检索的效率是很高的，耗时在1毫秒以下  设计原则 长度原则 散列原则 唯一性 Read More  HBase Rowkey设计 HBase的RowKey设计原则 HBase Rowkey的散列与预分区设计  </description>
+      <description>Rowkey 设计  Rowkey 是一段二进制码流，最大长度为64KB Rowkey 以字典顺序排序，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列  Rowkey：123,321,2 顺序为: 123,2,321  查找数据的时候，先查找 Rowkey 所在的 Region，然后将求路由到该 Region 获取数据 按单个 Rowkey 检索的效率是很高的，耗时在1毫秒以下  设计原则 避免热点 避免热点首先要了解 Rowkey的排序规则 和 分区分类原理
+ RowKey 按照 字典顺序 从小到大，如： 1, 12, 27, 3, 4, 66 如果没有预分区的话，刚开始所有的数据落在一个分区，当分区达到一定的阀值开始分裂，以上数据可能会分裂成 1, 12, 27 和 3, 4, 66 两个分区，每个分区记录 StartKey 和 EndKey， 多个分区会落在不同的机器上，避免热点的目的是为了利用集群的能力 和 减少分裂的次数，而不是操作都落在一台机器上  可以让头几位尽量是随机的而不是规律的产生，从而避免热点，大概有一下几种场景
+ 自增序列、时间戳 等自增序列  产生的数据类似于 11,12,13,14,15,16 ，假如现在有两个分区 [0,14..): 11,12,13 [14..,无穷):14,15,16 新生成 19,20,21,22 都会落在第二个分区 对于自增序列，可以通过转置的方式 比如对以上序列转置后变为，11,21,31,41,51,61 [0,4.</description>
     </item>
     
     <item>

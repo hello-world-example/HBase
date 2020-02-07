@@ -116,25 +116,107 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li>Rowkey 是一段二进制码流，<strong>最大长度为64KB</strong></li>
-<li>Rowkey 以<strong>字典顺序排序</strong>，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列；有两个rowkey：123,3,排列顺序为:3,123</li>
-<li>查找数据的时候，先查找 Rowkey 所在的Region，然后将求路由到该Region获取数据</li>
-<li>按单个Rowkey检索的效率是很高的，耗时在1毫秒以下</li>
+<li>Rowkey 以<strong>字典顺序排序</strong>，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列
+
+<ul>
+<li>Rowkey：123,321,2</li>
+<li>顺序为:     123,2,321</li>
+</ul></li>
+<li>查找数据的时候，先查找 Rowkey 所在的 Region，然后将求路由到该 Region 获取数据</li>
+<li>按单个 Rowkey 检索的效率是很高的，耗时在1毫秒以下</li>
 </ul>
 
 <h2 id="设计原则">设计原则</h2>
 
-<h3 id="长度原则">长度原则</h3>
+<h3 id="避免热点">避免热点</h3>
 
-<h3 id="散列原则">散列原则</h3>
+<p>避免热点首先要了解 <strong>Rowkey的排序规则</strong> 和 <strong>分区分类原理</strong></p>
+
+<ul>
+<li>RowKey 按照 <strong>字典顺序</strong> <strong>从小到大</strong>，如：  <code>1, 12,  27,  3,  4, 66</code></li>
+<li>如果没有预分区的话，刚开始所有的数据落在一个分区，当分区达到一定的阀值开始分裂，以上数据可能会分裂成   <code>1, 12,  27</code> 和 <code>3,  4, 66</code> 两个分区，每个分区记录 StartKey 和 EndKey，</li>
+<li>多个分区会落在不同的机器上，避免热点的目的是为了<strong>利用集群的能力</strong> 和 <strong>减少分裂的次数</strong>，而<strong>不是操作都落在一台机器上</strong></li>
+</ul>
+
+<p>可以<strong>让头几位尽量是随机的而不是规律的产生</strong>，从而避免热点，大概有一下几种场景</p>
+
+<ul>
+<li>自增序列、时间戳 等自增序列
+
+<ul>
+<li>产生的数据类似于 <code>11,12,13,14,15,16</code> ，假如现在有两个分区</li>
+<li><code>[0,14..)</code>:  <code>11,12,13</code></li>
+<li><code>[14..,无穷)</code>:<code>14,15,16</code></li>
+<li>新生成 <code>19,20,21,22</code> 都会落在第二个分区</li>
+<li>对于自增序列，可以通过转置的方式</li>
+<li>比如对以上序列转置后变为，<code>11,21,31,41,51,61</code></li>
+<li><code>[0,4..)</code>:  <code>11,12,13</code></li>
+<li><code>[4..,无穷)</code> : <code>14,15,16</code></li>
+<li>新生成 <code>19,20,21,22</code> -&gt; <code>91,02,12,22</code> 会分别落在，两个分区</li>
+</ul></li>
+<li>在头部加 Hash 值，产生随机性
+
+<ul>
+<li>比如同样的自增序列，<code>a,b,c,d,e</code>，通过 <code>rowkey = hash(key) / num + key</code> 的方式生成，则可提高随机性</li>
+</ul></li>
+</ul>
 
 <h3 id="唯一性">唯一性</h3>
 
+<ul>
+<li>HBase 通过 <code>rowkey:列族:列限定符:version</code> 四个属性唯一标示一条数据</li>
+<li>如果 列族设置的只保存一个 <code>version</code>，则相同的 <code>rowkey:列族:列限定符</code> 会互相覆盖</li>
+<li><code>version</code> 可以通过程序自动生成，也可使用 时间戳，默认是 <code>Long.MAX_VALUE</code>，注意使用时间戳的时候，同一毫秒产生的多条数据会互相覆盖（<code>rowkey:列族:列限定符</code> 一致的情况下）</li>
+</ul>
+
+<h2 id="限制与技巧">限制与技巧</h2>
+
+<ul>
+<li>因为 RowKey 前缀必须有一定的随机性，所以想通过 表级别的遍历 获取 最近新增数据是不可能的，除非 RowKey 是随时间顺序排列，这样又会导致热点</li>
+<li>RowKey 的随机性必须是根据现有数据可计算的，毕竟写入的数据是要读取的，假如随机生成 RowKey，以后要查找这条数据，但是无法二次生成该数据的 RowKey 或者 两次生成的结果不一样，就无法查找</li>
+<li>所以随机性要根据现有数据生成，顺序查找也只能在 RowKey 的级别进行 顺序查找， 比如 获取最近的数据可以通过构建 <code>转置(id) + (Long.MAX_VALUE - 时间戳)</code> 形式的 RowKey，获取 <code>id=123</code> 的最近一条数据，只需要遍历 <code>321</code> 开头的第一个条数据即可</li>
+<li>不要被 <strong>RowKey 和 关系型表的设计</strong> 限制住思维，<strong>要知道  <code>rowkey:列族:列限定符:version</code> 四个属性唯一标示一条数据</strong>，不仅 RowKey 有顺序，<code>列族:列限定符:version</code> 都是按照顺序保存的，<strong>同一个 列族 无数个 列限定符</strong> 都是可以的，列限定符是可以在运行时自动增加，所以同样需要参与设计</li>
+
+<li><p>有人也称 HBase 为 KeyValue 键值对数据库，可以通过以下数据理解这种叫法</p>
+
+<pre><code>ROW                           COLUMN+CELL                                                                                                                                
+03,9223370455878258,17870     column=C:AGE,    timestamp=1580976517000, value=222                                                                                           
+03,9223370455878258,17870     column=C:ID,     timestamp=1580976517000, value=30                                                                                             
+03,9223370455878258,17870     column=C:OTHER,  timestamp=1580976517000, value=222                                                                                         
+03,9223370455878258,17870     column=C:UNAME,  timestamp=1580976517000, value=AAA3                                                                                        
+03,9223370455878258,17870     column=C:_pk_,   timestamp=1580976517000, value=ID                                                                                           
+03,9223370455878258,17870     column=C:_ts_,   timestamp=1580976517000, value=1580976517000                                                                                
+03,9223370455878258,17870     column=C:_type_, timestamp=1580976517000, value=UPDATE 
+</code></pre></li>
+</ul>
+
+<h2 id="opentsdb-的-rowkey-设计">OpenTSDB 的 RowKey 设计</h2>
+
+<p>先通过 <a href="https://prometheus.io/docs/concepts/data_model/">Prometheus</a> 的一条数据 了解监控数据的格式</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&lt;metric name&gt;<span style="color:#f92672">{</span>&lt;label name&gt;<span style="color:#f92672">=</span>&lt;label value&gt;, ...<span style="color:#f92672">}</span> value
+
+&lt;监控指标名称&gt;<span style="color:#f92672">{</span>&lt;标签名1&gt;<span style="color:#f92672">=</span>&lt;标签值1&gt;, &lt;标签名2&gt;<span style="color:#f92672">=</span>&lt;标签值3&gt;, ...<span style="color:#f92672">}</span> 监控数据
+
+<span style="color:#75715e"># /messages 的 POST 请求有 100 个，method/handler 等 标签 用来过滤</span>
+api_http_requests_total<span style="color:#f92672">{</span>method<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;POST&#34;</span>, handler<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/messages&#34;</span><span style="color:#f92672">}</span> <span style="color:#ae81ff">100</span></code></pre></div>
+<p>OpenTSDB 可以通过 <strong>指标名称和时间范围，并且根据给定的标签名称和标签的值作为过滤条件，以此查询符合条件的数据</strong></p>
+
+<blockquote>
+<p>官方文档： <a href="http://opentsdb.net/docs/build/html/index.html">OpenTSDB 2.3 documentation</a> » <a href="http://opentsdb.net/docs/build/html/user_guide/index.html">User Guide</a> » <a href="http://opentsdb.net/docs/build/html/user_guide/backends/index.html">Storage</a> » <a href="http://opentsdb.net/docs/build/html/user_guide/backends/hbase.html#data-table-schema">Data Table Schema</a></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># RowKey</span>
+00000150E22700000001000001000002000004
+<span style="color:#e6db74">&#39;----&#39;&#39;------&#39;&#39;----&#39;&#39;----&#39;&#39;----&#39;&#39;----&#39;</span>
+metric  time   tagk1 tagv1 tagk2 tagv2
+
+<span style="color:#75715e"># Column Qualifiers 连限定符</span>
+将 Rowkey 中时间戳由原来的秒级别或毫秒级别统一转换成小时级别的
+多余的秒数据或者毫秒数据作为 Column Qualifiers</code></pre></div>
 <h2 id="read-more">Read More</h2>
 
 <ul>
-<li><a href="http://www.chepoo.com/hbase-rowkey-design.html">HBase Rowkey设计</a></li>
-<li><a href="http://www.chepoo.com/rowkey-design-of-hbase.html">HBase的RowKey设计原则</a></li>
 <li><a href="http://www.cnblogs.com/bdifn/p/3801737.html">HBase Rowkey的散列与预分区设计</a></li>
+<li><a href="https://blog.csdn.net/b6ecl1k7BS8O/article/details/84207777">OpenTSDB 底层 HBase 的 Rowkey 是如何设计的</a></li>
 </ul>
 </article>
 
@@ -171,10 +253,11 @@ https://github.com/alex-shpak/hugo-book
 <ul>
 <li><a href="#设计原则">设计原则</a>
 <ul>
-<li><a href="#长度原则">长度原则</a></li>
-<li><a href="#散列原则">散列原则</a></li>
+<li><a href="#避免热点">避免热点</a></li>
 <li><a href="#唯一性">唯一性</a></li>
 </ul></li>
+<li><a href="#限制与技巧">限制与技巧</a></li>
+<li><a href="#opentsdb-的-rowkey-设计">OpenTSDB 的 RowKey 设计</a></li>
 <li><a href="#read-more">Read More</a></li>
 </ul></li>
 </ul>
