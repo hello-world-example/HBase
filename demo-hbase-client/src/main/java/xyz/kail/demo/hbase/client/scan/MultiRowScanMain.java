@@ -1,20 +1,17 @@
 package xyz.kail.demo.hbase.client.scan;
 
 import lombok.Cleanup;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
-import org.apache.hadoop.hbase.filter.PrefixFilter;
-import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -50,16 +47,7 @@ public class MultiRowScanMain {
 
         @Cleanup final ResultScanner scanner = table.getScanner(scan);
 
-
-        Iterator<Result> iterator = scanner.iterator();
-        for (; iterator.hasNext(); ) {
-            Result result = iterator.next();
-            List<Cell> cells = result.listCells();
-            for (Cell cell : cells) {
-                HBaseUtils.printCell(cell);
-            }
-            System.out.println();
-        }
+        HBaseTool.Debug.printScanner(scanner);
 
         System.out.println("start" + start);
         System.out.println("end  " + System.currentTimeMillis());

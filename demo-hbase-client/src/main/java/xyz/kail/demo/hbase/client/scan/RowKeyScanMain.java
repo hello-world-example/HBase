@@ -1,18 +1,15 @@
 package xyz.kail.demo.hbase.client.scan;
 
 import lombok.Cleanup;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  *
@@ -34,20 +31,8 @@ public class RowKeyScanMain {
                 .setScanMetricsEnabled(true);
 
         @Cleanup final ResultScanner scanner = table.getScanner(scan);
-        final ScanMetrics scanMetrics = scanner.getScanMetrics();
-        System.out.println(scanMetrics.getMetricsMap());
-        System.out.println();
 
-        //
-        Iterator<Result> iterator = scanner.iterator();
-        for (; iterator.hasNext(); ) {
-            Result result = iterator.next();
-            List<Cell> cells = result.listCells();
-            for (Cell cell : cells) {
-                HBaseUtils.printCell(cell);
-            }
-            System.out.println();
-        }
+        HBaseTool.Debug.printScanner(scanner);
 
     }
 

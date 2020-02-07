@@ -5,13 +5,10 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
-
-import java.io.IOException;
-
-import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
+
+import java.io.IOException;
 
 /**
  * create '_kail_test_remark', {NAME => 'remark', VERSIONS => 100000}

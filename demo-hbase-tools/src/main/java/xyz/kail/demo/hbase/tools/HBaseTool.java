@@ -4,16 +4,17 @@ package xyz.kail.demo.hbase.tools;
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.snapshot.SnapshotDoesNotExistException;
+import org.apache.hadoop.hbase.snapshot.SnapshotExistsException;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,9 +81,9 @@ public final class HBaseTool {
 
     public static final class Table {
 
-        public static final String DEF_COLUMN = "C";
+        public static final String DEF_FAMILY = "F";
 
-        public static final byte[] DEF_COLUMN_BYTE = Bytes.toBytes(DEF_COLUMN);
+        public static final byte[] DEF_FAMILY_BYTE = Bytes.toBytes(DEF_FAMILY);
 
         /**
          * 获取所有 Table
@@ -116,7 +117,7 @@ public final class HBaseTool {
         public static void create(Connection conn, TableName tableName) throws IOException {
 
             final ColumnFamilyDescriptor columns = ColumnFamilyDescriptorBuilder
-                    .newBuilder(DEF_COLUMN_BYTE)
+                    .newBuilder(DEF_FAMILY_BYTE)
                     .build();
 
             create(conn, tableName, columns);
@@ -141,17 +142,98 @@ public final class HBaseTool {
 
         public static void delete(Connection conn, TableName tableName) throws IOException {
             @Cleanup final Admin admin = conn.getAdmin();
-            admin.disableTable(tableName);
-            admin.deleteTable(tableName);
 
+            Table.disable(conn, tableName);
+
+            admin.deleteTable(tableName);
+        }
+
+        public static void disable(Connection conn, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            if (admin.isTableEnabled(tableName)) {
+                admin.disableTable(tableName);
+            }
+        }
+
+        public static void enable(Connection conn, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            if (admin.isTableDisabled(tableName)) {
+                admin.enableTable(tableName);
+            }
+        }
+
+        public static void rename(Connection conn, TableName oldTableName, TableName newTableName) throws IOException {
+
+            final String snapshotName = oldTableName + "__snapshot__";
+
+            Table.disable(conn, oldTableName);
+            Snapshots.snapshot(conn, oldTableName, snapshotName);
+            Snapshots.cloneSilent(conn, snapshotName, newTableName);
+            Snapshots.delete(conn, snapshotName);
+            Table.delete(conn, oldTableName);
+        }
+    }
+
+    /**
+     * 0.95 开始引入 Snapshot
+     * <p>
+     * Snapshot 可以在线做，也可以离线做
+     * <p>
+     * Snapshot 的实现不涉及到 table 实际数据的拷贝，仅仅拷贝一些元数据
+     * 比如组成 table 的 region info，表的 descriptor，还有表对应的HFile的文件的引用。
+     */
+    public static final class Snapshots {
+
+        public static Map<String, String> list(Connection conn) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            return admin.listSnapshots().stream()
+                    .collect(Collectors.toMap(
+                            SnapshotDescription::getName,
+                            SnapshotDescription::getTableNameAsString
+                    ));
+        }
+
+
+        public static boolean exist(Connection conn, String snapshot) throws IOException {
+            return list(conn).containsKey(snapshot);
+        }
+
+        public static void snapshot(Connection conn, TableName tableName, String snapshot) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            try {
+                admin.snapshot(snapshot, tableName);
+            } catch (SnapshotExistsException ex) {
+                log.warn("{}", ex.getMessage());
+            }
+        }
+
+        public static void clone(Connection conn, String snapshot, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            admin.cloneSnapshot(snapshot, tableName);
+        }
+
+        public static void cloneSilent(Connection conn, String snapshot, TableName tableName) throws IOException {
+            try {
+                clone(conn, snapshot, tableName);
+            } catch (TableExistsException ex) {
+                log.warn("{}", ex.getMessage());
+            }
+
+        }
+
+        public static void delete(Connection conn, String snapshot) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            try {
+                admin.deleteSnapshot(snapshot);
+            } catch (SnapshotDoesNotExistException ex) {
+                log.warn("{}", ex.getMessage());
+            }
         }
     }
 
     public static final class RowKey {
 
-        // ********************************************************************************
-        // ******************************** reverse ******************************************
-        // ********************************************************************************
+        // region reverse
 
         public static String reverse(long l) {
             return reverse(String.valueOf(l));
@@ -179,10 +261,9 @@ public final class HBaseTool {
             return new String(array);
         }
 
+        // endregion
 
-        // ********************************************************************************
-        // ******************************** hash ******************************************
-        // ********************************************************************************
+        // region hash
 
         /**
          * 计算 字符串 的 hash值，同 String.hashCode()
@@ -214,6 +295,61 @@ public final class HBaseTool {
             return String.format("%0" + length + "d", i);
         }
 
+        // endregion
+
+    }
+
+    public static final class Debug {
+
+        public static void printHTableDescriptor(HTableDescriptor hTableDescriptor) {
+            TableName tableName = hTableDescriptor.getTableName();
+            System.out.println("tableName:" + tableName);
+
+            Map<String, String> configuration = hTableDescriptor.getConfiguration();
+            Set<Map.Entry<String, String>> entries = configuration.entrySet();
+            System.out.println("    configuration:");
+            for (Map.Entry<String, String> entry : entries) {
+                System.out.println("        " + entry.getKey() + ":" + entry.getValue());
+            }
+
+
+            System.out.println("    ColumnFamilies:");
+            HColumnDescriptor[] columnFamilies = hTableDescriptor.getColumnFamilies();
+            for (HColumnDescriptor columnDescriptor : columnFamilies) {
+                System.out.println("        " + columnDescriptor);
+            }
+            System.out.println();
+            System.out.println();
+        }
+
+        public static void printCell(Cell cell) {
+            System.out.print(Bytes.toStringBinary(CellUtil.cloneRow(cell)));
+            System.out.print(":");
+            System.out.print(Bytes.toStringBinary(CellUtil.cloneFamily(cell)));
+            System.out.print(":");
+            System.out.print(Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+            System.out.print(":");
+            System.out.print(cell.getTimestamp() + "(" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(cell.getTimestamp())) + ")");
+            System.out.print(" => ");
+            System.out.println(Bytes.toString(CellUtil.cloneValue(cell)));
+        }
+
+        public static void printScanner(ResultScanner scanner) {
+            final ScanMetrics scanMetrics = scanner.getScanMetrics();
+            System.out.println(scanMetrics.getMetricsMap());
+            System.out.println();
+
+            //
+            Iterator<Result> iterator = scanner.iterator();
+            for (; iterator.hasNext(); ) {
+                Result result = iterator.next();
+                List<Cell> cells = result.listCells();
+                for (Cell cell : cells) {
+                    printCell(cell);
+                }
+                System.out.println();
+            }
+        }
     }
 
 }

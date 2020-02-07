@@ -4,18 +4,12 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
-
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
+
+import java.io.IOException;
 
 /**
  * TODO 注释
@@ -56,7 +50,7 @@ public class ReadHBaseMetaTableMain {
          * 表描述
          */
         HTableDescriptor tableDescriptor = table.getTableDescriptor();
-        HBaseUtils.printHTableDescriptor(tableDescriptor);
+        HBaseTool.Debug.printHTableDescriptor(tableDescriptor);
 
 
         ResultScanner scanner = table.getScanner(newScan("test_boss_operate_log_v1", "test_boss_operate_log_v1,"));

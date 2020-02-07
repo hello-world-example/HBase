@@ -1,6 +1,5 @@
 package xyz.kail.demo.hbase.tools;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.impl.SimpleLogger;
 import org.slf4j.impl.SimpleLoggerConfiguration;
 

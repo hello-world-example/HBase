@@ -3,12 +3,10 @@ package xyz.kail.demo.hbase.client.admin;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
-
-import java.io.IOException;
-
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
+
+import java.io.IOException;
 
 /**
  * Created by kail on 2018/3/5.

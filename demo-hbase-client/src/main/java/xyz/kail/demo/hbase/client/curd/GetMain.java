@@ -9,7 +9,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
 import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,7 +51,7 @@ public class GetMain {
 
         List<Cell> cells = result.listCells();
         for (Cell cell : cells) {
-            HBaseUtils.printCell(cell);
+            HBaseTool.Debug.printCell(cell);
         }
 
         HBaseTool.Connect.close(connection);

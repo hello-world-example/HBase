@@ -1,9 +1,7 @@
 package xyz.kail.demo.hbase.client.filter;
 
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
@@ -11,15 +9,11 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
+import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
-import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
  * TODO 注释
@@ -60,14 +54,7 @@ public class FilterMain {
 
 
         ResultScanner scanner = table.getScanner(scan);
-        Iterator<Result> iterator = scanner.iterator();
-        for (; iterator.hasNext(); ) {
-            Result result = iterator.next();
-            List<Cell> cells = result.listCells();
-            for (Cell cell : cells) {
-                HBaseUtils.printCell(cell);
-            }
-        }
+        HBaseTool.Debug.printScanner(scanner);
 
         HBaseTool.Connect.close(connection);
     }
