@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -22,7 +23,7 @@ public class PutMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
         TableName kailTestTableName = TableName.valueOf("wordcount");
         Table table = connection.getTable(kailTestTableName);
@@ -44,7 +45,7 @@ public class PutMain {
 
         table.put(puts);
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
 
     }
 

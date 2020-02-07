@@ -12,11 +12,10 @@ headless: true
 * **Core**
   * [Port]({{< relref "/docs/Core/Port.md" >}})
   * [RowKey]({{< relref "/docs/Core/RowKey.md" >}})
-  * [HBase 列族配置]({{< relref "/docs/Core/Family-Properties.md" >}})
-  * [HBase 内置过滤器简介]({{< relref "/docs/Core/Filter.md" >}})
+  * [Family]({{< relref "/docs/Core/Family-Properties.md" >}})
+  * [FIlter]({{< relref "/docs/Core/Filter.md" >}})
 * **Action**
   * [HFile Tool 查看 HFile]({{< relref "/docs/Action/Hfile-Pretty-Printer.md" >}})
   * [如何使用 Bulk Loading]({{< relref "/docs/Action/How-To-Use-Hbase-Bulk-Loading.md" >}})
-* [杂项]({{< relref "/docs/Other.md" >}})
 
 

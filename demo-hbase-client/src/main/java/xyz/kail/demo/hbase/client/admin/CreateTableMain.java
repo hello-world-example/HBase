@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -22,7 +23,7 @@ public class CreateTableMain {
 
 
     public static void main(String[] args) throws IOException {
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
         Admin admin = connection.getAdmin();
 
         TableName kailTestTableName = TableName.valueOf("_kail_test_remark");
@@ -50,7 +51,7 @@ public class CreateTableMain {
 
         admin.createTable(tableDescriptor);
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
     }
 
 }

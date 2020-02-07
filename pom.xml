@@ -10,8 +10,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>demo-hbase-cdh5</module>
-        <module>demo-hbase-cdh6</module>
         <module>demo-hbase-async</module>
         <module>demo-hbase-client</module>
         <module>demo-hbase-server</module>

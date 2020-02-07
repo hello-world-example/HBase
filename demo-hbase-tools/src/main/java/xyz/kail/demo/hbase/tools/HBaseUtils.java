@@ -23,23 +23,6 @@ import java.util.Set;
 @Slf4j
 public class HBaseUtils {
 
-    /**
-     * 获取 HBase 链接
-     */
-    public static Connection getConnection(String quorum) throws IOException {
-        Configuration hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", quorum);
-        return ConnectionFactory.createConnection(hbaseConf);
-    }
-
-    public static void close(Closeable closeable) {
-        try {
-            closeable.close();
-        } catch (IOException e) {
-            log.warn("", e);
-        }
-    }
-
 
     public static void printHTableDescriptor(HTableDescriptor hTableDescriptor) {
         TableName tableName = hTableDescriptor.getTableName();
@@ -72,10 +55,6 @@ public class HBaseUtils {
         System.out.print(cell.getTimestamp() + "(" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(cell.getTimestamp())) + ")");
         System.out.print(" => ");
         System.out.println(Bytes.toString(CellUtil.cloneValue(cell)));
-
-        System.out.println();
-        System.out.println();
-
     }
 
 }

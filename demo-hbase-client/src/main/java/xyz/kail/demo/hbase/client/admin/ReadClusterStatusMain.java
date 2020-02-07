@@ -7,6 +7,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import java.io.IOException;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -15,7 +16,7 @@ import xyz.kail.demo.hbase.tools.HBaseUtils;
 public class ReadClusterStatusMain {
 
     public static void main(String[] args) throws IOException {
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
         Admin admin = connection.getAdmin();
 
         ClusterStatus clusterStatus = admin.getClusterStatus();
@@ -33,7 +34,7 @@ public class ReadClusterStatusMain {
         System.out.println(masterInfoPort);
 
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
 
     }
 

@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -20,7 +21,7 @@ public class PutVersionMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
         TableName kailTestTableName = TableName.valueOf("_kail_test_remark");
         Table table = connection.getTable(kailTestTableName);
@@ -29,7 +30,6 @@ public class PutVersionMain {
 //        delete.addColumn(Bytes.toBytes("remark"), Bytes.toBytes("200"), 1612L);
 //        table.delete(delete);
 
-
         Put putn = new Put(Bytes.toBytes("123_rowkey"));
         putn.addColumn(Bytes.toBytes("remark"), Bytes.toBytes("200"), 1600L, "1600L".getBytes());
         putn.addColumn(Bytes.toBytes("remark"), Bytes.toBytes("200"), 1611L, "1611L".getBytes());
@@ -37,7 +37,7 @@ public class PutVersionMain {
         table.put(putn);
 
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
 
     }
 

@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -28,7 +29,7 @@ import xyz.kail.demo.hbase.tools.HBaseUtils;
 public class FilterMain {
 
     public static void main(String[] args) throws IOException, DeserializationException {
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
 //        Table table = connection.getTable(TableName.valueOf("hbase:meta"));
         Table table = connection.getTable(TableName.valueOf("dev_boss_remark_v1"));
@@ -68,7 +69,7 @@ public class FilterMain {
             }
         }
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
     }
 
 

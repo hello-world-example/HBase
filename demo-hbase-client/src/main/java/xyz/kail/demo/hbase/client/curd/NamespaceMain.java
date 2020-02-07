@@ -9,7 +9,7 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseAdminUtils;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 import xyz.kail.demo.hbase.tools.Slf4jSimpleTool;
 
@@ -26,7 +26,7 @@ public class NamespaceMain {
     public static void main(String[] args) throws IOException {
 
 
-        @Cleanup Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        @Cleanup Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
         final TableName tableName = TableName.valueOf("test:T_USER");
         log.info("==={}", tableName);
@@ -39,10 +39,10 @@ public class NamespaceMain {
             log.info("==={}", descriptor);
         } catch (TableNotFoundException ex) {
             log.error("==={}", ex.getMessage());
-            HBaseAdminUtils.Table.create(connection, tableName);
+            HBaseTool.Table.create(connection, tableName);
         }
 
-        final boolean tableExists = HBaseAdminUtils.Table.exist(connection, tableName);
+        final boolean tableExists = HBaseTool.Table.exist(connection, tableName);
         log.info("==={}", tableExists);
     }
 

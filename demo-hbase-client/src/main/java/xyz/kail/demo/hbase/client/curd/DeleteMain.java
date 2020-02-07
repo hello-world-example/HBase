@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -19,7 +20,7 @@ import xyz.kail.demo.hbase.tools.HBaseUtils;
 public class DeleteMain {
 
     public static void main(String[] args) throws IOException {
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
         Table table = connection.getTable(TableName.valueOf("test"));
 
@@ -29,7 +30,7 @@ public class DeleteMain {
         table.delete(delete);
 
 
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(connection);
 
     }
 

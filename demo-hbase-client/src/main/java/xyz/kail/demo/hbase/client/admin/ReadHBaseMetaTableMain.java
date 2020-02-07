@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 
 import xyz.kail.demo.hbase.client.Rcore;
+import xyz.kail.demo.hbase.tools.HBaseTool;
 import xyz.kail.demo.hbase.tools.HBaseUtils;
 
 /**
@@ -46,7 +47,7 @@ public class ReadHBaseMetaTableMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseUtils.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
 
         TableName tableName = TableName.valueOf("hbase:meta");
         Table table = connection.getTable(tableName);
@@ -78,8 +79,8 @@ public class ReadHBaseMetaTableMain {
         }
 
 
-        HBaseUtils.close(scanner);
-        HBaseUtils.close(connection);
+        HBaseTool.Connect.close(scanner);
+        HBaseTool.Connect.close(connection);
 
     }
 
