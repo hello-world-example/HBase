@@ -7,15 +7,20 @@ headless: true
   * [单机本地文件系统]({{< relref "/docs/Install/Stand-Alone-Local-File.md" >}})
   * [Docker 搭建单机 CDH 环境]({{< relref "/docs/Install/Stand-Alone-CDH-Docker.md" >}})
   * [HBase 配置简介]({{< relref "/docs/Install/Properties.md" >}})
+  * [Port]({{< relref "/docs/Core/Port.md" >}})
 * **Cli**
   * [hbase shell]({{< relref "/docs/Cli/HBase-Shell.md" >}})
 * **Core**
-  * [Port]({{< relref "/docs/Core/Port.md" >}})
+  * [架构简介]({{< relref "/docs/Core/Architecture.md" >}})
   * [RowKey]({{< relref "/docs/Core/RowKey.md" >}})
   * [Family]({{< relref "/docs/Core/Family-Properties.md" >}})
-  * [FIlter]({{< relref "/docs/Core/Filter.md" >}})
+  * [Filter]({{< relref "/docs/Core/Filter.md" >}})
+  * [_压缩和编码]({{< relref "/docs/Core/Compression-and-Data-Block-Encoding.md" >}})
+  * 写路径和优化
+  * 读路径和优化
 * **Action**
   * [HFile Tool 查看 HFile]({{< relref "/docs/Action/Hfile-Pretty-Printer.md" >}})
   * [如何使用 Bulk Loading]({{< relref "/docs/Action/How-To-Use-Hbase-Bulk-Loading.md" >}})
+  * YCSB 测试
 
 
