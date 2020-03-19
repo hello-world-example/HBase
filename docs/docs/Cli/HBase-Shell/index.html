@@ -7,7 +7,7 @@
 <title>H Base Shell | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,10 +116,7 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="hbase-shell">hbase shell</h1>
-
+<article class="markdown"><h1 id="hbase-shell">hbase shell</h1>
 <h2 id="基础命令">基础命令</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 进入</span>
 ᐅ ./bin/hbase shell
@@ -133,11 +137,11 @@ hbase&gt; help <span style="color:#e6db74">&#39;command&#39;</span>
 <span style="color:#75715e"># 启动或者关闭 debug 模式</span>
 hbase&gt; debug
 <span style="color:#75715e"># 查看是否启动 debug 模式</span>
-hbase&gt; debug?</code></pre></div>
-<h2 id="general">General ✔️</h2>
+hbase&gt; debug?
+</code></pre></div><h2 id="general-">General ✔️</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># status == status &#39;summary&#39;</span>
 hbase&gt; status
-<span style="color:#ae81ff">1</span> active master, <span style="color:#ae81ff">0</span> backup masters, <span style="color:#ae81ff">1</span> servers, <span style="color:#ae81ff">0</span> dead, <span style="color:#ae81ff">2</span>.0000 average load
+<span style="color:#ae81ff">1</span> active master, <span style="color:#ae81ff">0</span> backup masters, <span style="color:#ae81ff">1</span> servers, <span style="color:#ae81ff">0</span> dead, 2.0000 average load
 hbase&gt; status <span style="color:#e6db74">&#39;simple&#39;</span>
 hbase&gt; status <span style="color:#e6db74">&#39;detailed&#39;</span>
 hbase&gt; status <span style="color:#e6db74">&#39;replication&#39;</span>
@@ -147,13 +151,13 @@ hbase&gt; table_help
 
 # 
 hbase&gt; version
-<span style="color:#ae81ff">1</span>.2.0-cdh5.7.0, rUnknown, Wed Mar <span style="color:#ae81ff">23</span> <span style="color:#ae81ff">11</span>:39:14 PDT <span style="color:#ae81ff">2016</span>
+1.2.0-cdh5.7.0, rUnknown, Wed Mar <span style="color:#ae81ff">23</span> 11:39:14 PDT <span style="color:#ae81ff">2016</span>
 
 # 
 hbase&gt; whoami
 root <span style="color:#f92672">(</span>auth:SIMPLE<span style="color:#f92672">)</span>
-    groups: root</code></pre></div>
-<h2 id="namespace">namespace ✔️</h2>
+    groups: root
+</code></pre></div><h2 id="namespace-">namespace ✔️</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 列出所有的命名空间</span>
 hbase&gt; list_namespace
 NAMESPACE                                                                                                                                                                                  
@@ -186,33 +190,30 @@ hbase&gt; describe_namespace <span style="color:#e6db74">&#39;kail02&#39;</span>
 <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;kail02&#39;</span>, NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;kail&#39;</span>, author <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;kail&#39;</span>, create_time <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;2020-01-05 20:07:52&#39;</span><span style="color:#f92672">}</span>      
 
 <span style="color:#75715e"># 删除 namespace，没有表才能删除</span>
-hbase&gt; drop_namespace <span style="color:#e6db74">&#39;kail02&#39;</span></code></pre></div>
-<h2 id="ddl">ddl ✔️</h2>
-
+hbase&gt; drop_namespace <span style="color:#e6db74">&#39;kail02&#39;</span>
+</code></pre></div><h2 id="ddl-">ddl ✔️</h2>
 <h3 id="list-列出所有表">list 列出所有表</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; list
 <span style="color:#75715e"># 表名支持正则匹配</span>
-hbase&gt; list <span style="color:#e6db74">&#39;abc.*&#39;</span></code></pre></div>
-<h3 id="create-drop">create / drop</h3>
-
+hbase&gt; list <span style="color:#e6db74">&#39;abc.*&#39;</span>
+</code></pre></div><h3 id="create--drop">create / drop</h3>
 <blockquote>
 <p>详见： <a href="/HBase/docs/Core/Family-Properties/">HBase 列族配置</a></p>
 </blockquote>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 在 namespace kail 下 创建 t_test 表，列族是 F</span>
 hbase&gt; create <span style="color:#e6db74">&#39;kail:t_test&#39;</span>,<span style="color:#e6db74">&#39;F&#39;</span>
 <span style="color:#75715e"># 保留 5 个版本</span>
-hbase&gt; create <span style="color:#e6db74">&#39;t_test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F1&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span><span style="color:#f92672">}</span>
+hbase&gt; create <span style="color:#e6db74">&#39;t_test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F1&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; 5<span style="color:#f92672">}</span>
 
 <span style="color:#75715e"># 【pre-split】</span>
 <span style="color:#75715e"># 默认创建的表只分配一个 region 达不到负载均衡的效果，如果能提前预测 region，可以在创建表的时候进行划分</span>
 hbase&gt; create <span style="color:#e6db74">&#39;t_test&#39;</span>, <span style="color:#e6db74">&#39;F&#39;</span>, SPLITS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;10&#39;</span>, <span style="color:#e6db74">&#39;20&#39;</span>, <span style="color:#e6db74">&#39;30&#39;</span>, <span style="color:#e6db74">&#39;40&#39;</span><span style="color:#f92672">]</span>
-hbase&gt; create <span style="color:#e6db74">&#39;t_test&#39;</span>, <span style="color:#e6db74">&#39;F&#39;</span>, <span style="color:#f92672">{</span>NUMREGIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">15</span>, SPLITALGO <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;HexStringSplit&#39;</span><span style="color:#f92672">}</span>
+hbase&gt; create <span style="color:#e6db74">&#39;t_test&#39;</span>, <span style="color:#e6db74">&#39;F&#39;</span>, <span style="color:#f92672">{</span>NUMREGIONS <span style="color:#f92672">=</span>&gt; 15, SPLITALGO <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;HexStringSplit&#39;</span><span style="color:#f92672">}</span>
 
 <span style="color:#75715e"># 删除表</span>
 hbase&gt; disable <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
-hbase&gt; drop <span style="color:#e6db74">&#39;kail:t_test&#39;</span></code></pre></div>
-<h3 id="desc-describe-查看表结构">desc / describe  查看表结构</h3>
-
+hbase&gt; drop <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
+</code></pre></div><h3 id="desc--describe--查看表结构">desc / describe  查看表结构</h3>
 <blockquote>
 <p>详见： <a href="/HBase/docs/Core/Family-Properties/">HBase 列族配置</a></p>
 </blockquote>
@@ -220,8 +221,8 @@ hbase&gt; drop <span style="color:#e6db74">&#39;kail:t_test&#39;</span></code></
 Table kail:t_test is ENABLED                                                                                 
 kail:t_test                                                                
 COLUMN FAMILIES DESCRIPTION                                                                                 
-<span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, DATA_BLOCK_ENCODING <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;NONE&#39;</span>, BLOOMFILTER <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;ROW&#39;</span>, REPLICATION_SCOPE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;0&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;1&#39;</span>, COMPRESSION <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;NONE&#39;</span>, MIN_VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;0&#39;</span>, TTL <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;FOREVER&#39;</span>, KEEP_DELETED_CELLS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;FALSE&#39;</span>, BLOCKSIZE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;65536&#39;</span>, IN_MEMORY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;false&#39;</span>, BLOCKCACHE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;true&#39;</span><span style="color:#f92672">}</span>                                                                                                          </code></pre></div>
-<h3 id="get-table-exists-disable-enable-is-disabled-is-enabled">get_table / exists / disable / enable / is_disabled / is_enabled</h3>
+<span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, DATA_BLOCK_ENCODING <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;NONE&#39;</span>, BLOOMFILTER <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;ROW&#39;</span>, REPLICATION_SCOPE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;0&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;1&#39;</span>, COMPRESSION <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;NONE&#39;</span>, MIN_VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;0&#39;</span>, TTL <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;FOREVER&#39;</span>, KEEP_DELETED_CELLS <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;FALSE&#39;</span>, BLOCKSIZE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;65536&#39;</span>, IN_MEMORY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;false&#39;</span>, BLOCKCACHE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;true&#39;</span><span style="color:#f92672">}</span>                                                                                                          
+</code></pre></div><h3 id="get_table--exists--disable--enable--is_disabled--is_enabled">get_table / exists / disable / enable / is_disabled / is_enabled</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 获取表的引用</span>
 hbase&gt; t <span style="color:#f92672">=</span> get_table <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
 <span style="color:#75715e"># 查看操作帮助</span>
@@ -241,11 +242,11 @@ hbase&gt; is_enabled <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
 <span style="color:#75715e"># 修改表之前需要先禁用表</span>
 hbase&gt; disable <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
 <span style="color:#75715e"># alter 之后，重新启用</span>
-hbase&gt; enable <span style="color:#e6db74">&#39;kail:t_test&#39;</span></code></pre></div>
-<h3 id="alter-alter-async-alter-status">alter / alter_async / alter_status</h3>
+hbase&gt; enable <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
+</code></pre></div><h3 id="alter--alter_async--alter_status">alter / alter_async / alter_status</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 修改列族属性（版本号）</span>
 hbase&gt; alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span>
-hbase&gt; alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">15</span><span style="color:#f92672">}</span>
+hbase&gt; alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; 15<span style="color:#f92672">}</span>
 
 <span style="color:#75715e"># 增加列族</span>
 alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;F2&#39;</span>
@@ -256,13 +257,13 @@ alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="col
 <span style="color:#75715e"># 设置只读</span>
 alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, READONLY
 <span style="color:#75715e"># 取消只读模式（删除列族）</span>
-alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;delete&#39;</span> <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;READONLY&#39;</span></code></pre></div>
-<h3 id="locate-region-查看-rowkey-所在的-region">locate_region 查看 rowkey 所在的 region</h3>
+alter <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;delete&#39;</span> <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;READONLY&#39;</span>
+
+</code></pre></div><h3 id="locate_region-查看-rowkey-所在的-region">locate_region 查看 rowkey 所在的 region</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; locate_region <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;1&#39;</span>
 HOST                        REGION                                                                                                                                     
-quickstart.cloudera:60020   <span style="color:#f92672">{</span>ENCODED <span style="color:#f92672">=</span>&gt; 6b03d15bc0abe09c86845318e8056a16, NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;kail:t_test,,1578227112676.6b03d15bc0abe09c86845318e8056a16.&#39;</span>, STARTKEY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;&#39;</span>, ENDKEY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;&#39;</span><span style="color:#f92672">}</span>             </code></pre></div>
-<h3 id="show-filters-查看支持的-filter">show_filters 查看支持的 Filter</h3>
-
+quickstart.cloudera:60020   <span style="color:#f92672">{</span>ENCODED <span style="color:#f92672">=</span>&gt; 6b03d15bc0abe09c86845318e8056a16, NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;kail:t_test,,1578227112676.6b03d15bc0abe09c86845318e8056a16.&#39;</span>, STARTKEY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;&#39;</span>, ENDKEY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;&#39;</span><span style="color:#f92672">}</span>             
+</code></pre></div><h3 id="show_filters-查看支持的-filter">show_filters 查看支持的 Filter</h3>
 <blockquote>
 <p>详见： <a href="/HBase/docs/Core/Filter/">HBase 内置过滤器简介</a></p>
 </blockquote>
@@ -273,10 +274,9 @@ PageFilter
 MultipleColumnPrefixFilter                                                                                 
 FamilyFilter                                                                                 
 ColumnPaginationFilter
-...</code></pre></div>
-<h2 id="dml">dml ✔️</h2>
-
-<h3 id="put-append">put / append</h3>
+...
+</code></pre></div><h2 id="dml-">dml ✔️</h2>
+<h3 id="put--append">put / append</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># put 表、rowkey、列:列限定符、值</span>
 hbase&gt; put <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:c1&#39;</span>, <span style="color:#e6db74">&#39;value1&#39;</span>
 <span style="color:#75715e"># put 表、rowkey、列族:列限定符、值、【版本】</span>
@@ -284,34 +284,34 @@ hbase&gt; put <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span st
 
 <span style="color:#75715e"># 给 value 追加内容（-new）</span>
 hbase&gt; append <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:c1&#39;</span>, <span style="color:#e6db74">&#39;-new&#39;</span>
-hbase&gt; append <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:c1&#39;</span>, <span style="color:#e6db74">&#39;-new&#39;</span>, ATTRIBUTES<span style="color:#f92672">=</span>&gt;<span style="color:#f92672">{</span><span style="color:#e6db74">&#39;kkk&#39;</span><span style="color:#f92672">=</span>&gt;<span style="color:#e6db74">&#39;vvv&#39;</span><span style="color:#f92672">}</span></code></pre></div>
-<h3 id="count">count</h3>
+hbase&gt; append <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:c1&#39;</span>, <span style="color:#e6db74">&#39;-new&#39;</span>, ATTRIBUTES<span style="color:#f92672">=</span>&gt;<span style="color:#f92672">{</span><span style="color:#e6db74">&#39;kkk&#39;</span><span style="color:#f92672">=</span>&gt;<span style="color:#e6db74">&#39;vvv&#39;</span><span style="color:#f92672">}</span>
+</code></pre></div><h3 id="count">count</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 统计表的数据量，默认 INTERVAL =&gt; 1000, CACHE =&gt; 10</span>
 hbase&gt; count <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
-hbase&gt; count <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, INTERVAL <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5000</span></code></pre></div>
-<h3 id="scan">scan</h3>
+hbase&gt; count <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, INTERVAL <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5000</span>
+</code></pre></div><h3 id="scan">scan</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 遍历最新版本的表数据（）</span>
 hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
-hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>LIMIT <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">10</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">10</span><span style="color:#f92672">}</span>
+hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>LIMIT <span style="color:#f92672">=</span>&gt; 10, VERSIONS <span style="color:#f92672">=</span>&gt; 10<span style="color:#f92672">}</span>
 <span style="color:#75715e"># 只获取 F列、从 r2 行开始，获取 10条，每条数据获取最近 10个版本的数据</span>
-hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F&#39;</span><span style="color:#f92672">]</span>, STARTROW <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;r2&#39;</span>, LIMIT <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">10</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">10</span><span style="color:#f92672">}</span>
+hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F&#39;</span><span style="color:#f92672">]</span>, STARTROW <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;r2&#39;</span>, LIMIT <span style="color:#f92672">=</span>&gt; 10, VERSIONS <span style="color:#f92672">=</span>&gt; 10<span style="color:#f92672">}</span>
 
-hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F:c1&#39;</span><span style="color:#f92672">]</span>, LIMIT <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">10</span><span style="color:#f92672">}</span>
+hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F:c1&#39;</span><span style="color:#f92672">]</span>, LIMIT <span style="color:#f92672">=</span>&gt; 10<span style="color:#f92672">}</span>
 hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F:c1:toInt&#39;</span><span style="color:#f92672">]}</span>
-hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F:c1:c(org.apache.hadoop.hbase.util.Bytes).toInt&#39;</span><span style="color:#f92672">]}</span></code></pre></div>
-<h3 id="get">get</h3>
+hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#f92672">{</span>COLUMNS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F:c1:c(org.apache.hadoop.hbase.util.Bytes).toInt&#39;</span><span style="color:#f92672">]}</span>
+</code></pre></div><h3 id="get">get</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 获取 r1 的所有列</span>
 hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>
 <span style="color:#75715e"># 获取 r1 的 F列</span>
 hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F&#39;</span>
 <span style="color:#75715e"># 获取 r1 的 F列</span>
 hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>COLUMN <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;F&#39;</span><span style="color:#f92672">]</span> <span style="color:#f92672">}</span>
-hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>COLUMN <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, TIMESTAMP <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">1578235640022</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">4</span><span style="color:#f92672">}</span>
+hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>COLUMN <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, TIMESTAMP <span style="color:#f92672">=</span>&gt; 1578235640022, VERSIONS <span style="color:#f92672">=</span>&gt; 4<span style="color:#f92672">}</span>
 <span style="color:#75715e"># 指定时间范围的数据</span>
 hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>TIMERANGE <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span>ts1, ts2<span style="color:#f92672">]}</span>
 <span style="color:#75715e"># 值过滤器</span>
-hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>FILTER <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#34;ValueFilter(=, &#39;binary:abc&#39;)&#34;</span><span style="color:#f92672">}</span></code></pre></div>
-<h3 id="incr-get-counter">incr / get_counter</h3>
+hbase&gt; get <span style="color:#e6db74">&#39;kail:t_test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#f92672">{</span>FILTER <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#34;ValueFilter(=, &#39;binary:abc&#39;)&#34;</span><span style="color:#f92672">}</span>
+</code></pre></div><h3 id="incr--get_counter">incr / get_counter</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 自增列</span>
 hbase&gt; incr <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>,<span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:i&#39;</span>
 COUNTER VALUE <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>
@@ -319,10 +319,10 @@ hbase&gt; incr <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>,<span st
 COUNTER VALUE <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
 
 <span style="color:#75715e"># 查看表数据</span>
-hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>, <span style="color:#f92672">{</span>VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">100</span><span style="color:#f92672">}</span>
+hbase&gt; scan <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>, <span style="color:#f92672">{</span>VERSIONS <span style="color:#f92672">=</span>&gt; 100<span style="color:#f92672">}</span>
 ROW   COLUMN+CELL                                                                                                                                
- r1   column<span style="color:#f92672">=</span>F:i, timestamp<span style="color:#f92672">=</span><span style="color:#ae81ff">1578236311698</span>, value<span style="color:#f92672">=</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">03</span>                                       
- r2   column<span style="color:#f92672">=</span>F:i, timestamp<span style="color:#f92672">=</span><span style="color:#ae81ff">1578236315391</span>, value<span style="color:#f92672">=</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">00</span><span style="color:#ae81ff">\x</span><span style="color:#ae81ff">01</span>
+ r1   column<span style="color:#f92672">=</span>F:i, timestamp<span style="color:#f92672">=</span>1578236311698, value<span style="color:#f92672">=</span><span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span><span style="color:#ae81ff">03</span>                                       
+ r2   column<span style="color:#f92672">=</span>F:i, timestamp<span style="color:#f92672">=</span>1578236315391, value<span style="color:#f92672">=</span><span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span>00<span style="color:#ae81ff">\x</span><span style="color:#ae81ff">01</span>
 
 <span style="color:#75715e"># 获取自增列值</span>
 hbase&gt; get_counter <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>,<span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;F:i&#39;</span>
@@ -330,13 +330,13 @@ COUNTER VALUE <span style="color:#f92672">=</span> <span style="color:#ae81ff">3
 
 <span style="color:#75715e"># 加指定的值</span>
 hbase&gt; incr <span style="color:#e6db74">&#39;kail:t_incr&#39;</span>,<span style="color:#e6db74">&#39;r2&#39;</span>, <span style="color:#e6db74">&#39;F:i&#39;</span>, <span style="color:#ae81ff">10</span>
-COUNTER VALUE <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span></code></pre></div>
-<h3 id="get-splits-获取分区列表">get_splits 获取分区列表</h3>
+COUNTER VALUE <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>
+</code></pre></div><h3 id="get_splits-获取分区列表">get_splits 获取分区列表</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; get_splits <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
 Total number of splits <span style="color:#f92672">=</span> 1
 
-<span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[]</span></code></pre></div>
-<h3 id="delete-deleteall-truncate-truncate-preserve">delete / deleteall / truncate / truncate_preserve</h3>
+<span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[]</span>
+</code></pre></div><h3 id="delete--deleteall--truncate--truncate_preserve">delete / deleteall / truncate / truncate_preserve</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 语法错误</span>
 hbase&gt; delete <span style="color:#e6db74">&#39;kail:t_test&#39;</span>,<span style="color:#e6db74">&#39;r2&#39;</span>
 <span style="color:#75715e"># delete 需要精确到时间戳</span>
@@ -355,37 +355,22 @@ hbase&gt; is_enabled <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
 true
 
 <span style="color:#75715e"># 清除数据，不清分区</span>
-hbase&gt; truncate_preserve <span style="color:#e6db74">&#39;kail:t_test&#39;</span></code></pre></div>
-<h2 id="tools">tools</h2>
-
+hbase&gt; truncate_preserve <span style="color:#e6db74">&#39;kail:t_test&#39;</span>
+</code></pre></div><h2 id="tools">tools</h2>
 <p>assign, balance_switch, balancer, balancer_enabled, catalogjanitor_enabled, catalogjanitor_run, catalogjanitor_switch, close_region, compact, compact_mob, compact_rs, flush, major_compact, major_compact_mob, merge_region, move, normalize, normalizer_enabled, normalizer_switch, split, trace, unassign, wal_roll, zk_dump</p>
-
 <h2 id="replication">replication</h2>
-
 <p>add_peer, append_peer_tableCFs, disable_peer, disable_table_replication, enable_peer, enable_table_replication, list_peers, list_replicated_tables, remove_peer, remove_peer_tableCFs, set_peer_tableCFs, show_peer_tableCFs</p>
-
 <h2 id="snapshots">snapshots</h2>
-
 <p>clone_snapshot, delete_all_snapshot, delete_snapshot, list_snapshots, restore_snapshot, snapshot</p>
-
 <h2 id="configuration">configuration</h2>
-
 <p>update_all_config, update_config</p>
-
 <h2 id="quotas">quotas</h2>
-
 <p>list_quotas, set_quota</p>
-
 <h2 id="security">security</h2>
-
 <p>grant, list_security_capabilities, revoke, user_permission</p>
-
 <h2 id="procedures">procedures</h2>
-
 <p>abort_procedure, list_procedures</p>
-
 <h2 id="visibility-labels">visibility labels</h2>
-
 <p>add_labels, clear_auths, get_auths, list_labels, set_auths, set_visibility</p>
 </article>
 
@@ -417,42 +402,41 @@ hbase&gt; truncate_preserve <span style="color:#e6db74">&#39;kail:t_test&#39;</s
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#hbase-shell">hbase shell</a>
-<ul>
-<li><a href="#基础命令">基础命令</a></li>
-<li><a href="#general">General ✔️</a></li>
-<li><a href="#namespace">namespace ✔️</a></li>
-<li><a href="#ddl">ddl ✔️</a>
-<ul>
-<li><a href="#list-列出所有表">list 列出所有表</a></li>
-<li><a href="#create-drop">create / drop</a></li>
-<li><a href="#desc-describe-查看表结构">desc / describe  查看表结构</a></li>
-<li><a href="#get-table-exists-disable-enable-is-disabled-is-enabled">get_table / exists / disable / enable / is_disabled / is_enabled</a></li>
-<li><a href="#alter-alter-async-alter-status">alter / alter_async / alter_status</a></li>
-<li><a href="#locate-region-查看-rowkey-所在的-region">locate_region 查看 rowkey 所在的 region</a></li>
-<li><a href="#show-filters-查看支持的-filter">show_filters 查看支持的 Filter</a></li>
-</ul></li>
-<li><a href="#dml">dml ✔️</a>
-<ul>
-<li><a href="#put-append">put / append</a></li>
-<li><a href="#count">count</a></li>
-<li><a href="#scan">scan</a></li>
-<li><a href="#get">get</a></li>
-<li><a href="#incr-get-counter">incr / get_counter</a></li>
-<li><a href="#get-splits-获取分区列表">get_splits 获取分区列表</a></li>
-<li><a href="#delete-deleteall-truncate-truncate-preserve">delete / deleteall / truncate / truncate_preserve</a></li>
-</ul></li>
-<li><a href="#tools">tools</a></li>
-<li><a href="#replication">replication</a></li>
-<li><a href="#snapshots">snapshots</a></li>
-<li><a href="#configuration">configuration</a></li>
-<li><a href="#quotas">quotas</a></li>
-<li><a href="#security">security</a></li>
-<li><a href="#procedures">procedures</a></li>
-<li><a href="#visibility-labels">visibility labels</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#基础命令">基础命令</a></li>
+    <li><a href="#general-">General ✔️</a></li>
+    <li><a href="#namespace-">namespace ✔️</a></li>
+    <li><a href="#ddl-">ddl ✔️</a>
+      <ul>
+        <li><a href="#list-列出所有表">list 列出所有表</a></li>
+        <li><a href="#create--drop">create / drop</a></li>
+        <li><a href="#desc--describe--查看表结构">desc / describe  查看表结构</a></li>
+        <li><a href="#get_table--exists--disable--enable--is_disabled--is_enabled">get_table / exists / disable / enable / is_disabled / is_enabled</a></li>
+        <li><a href="#alter--alter_async--alter_status">alter / alter_async / alter_status</a></li>
+        <li><a href="#locate_region-查看-rowkey-所在的-region">locate_region 查看 rowkey 所在的 region</a></li>
+        <li><a href="#show_filters-查看支持的-filter">show_filters 查看支持的 Filter</a></li>
+      </ul>
+    </li>
+    <li><a href="#dml-">dml ✔️</a>
+      <ul>
+        <li><a href="#put--append">put / append</a></li>
+        <li><a href="#count">count</a></li>
+        <li><a href="#scan">scan</a></li>
+        <li><a href="#get">get</a></li>
+        <li><a href="#incr--get_counter">incr / get_counter</a></li>
+        <li><a href="#get_splits-获取分区列表">get_splits 获取分区列表</a></li>
+        <li><a href="#delete--deleteall--truncate--truncate_preserve">delete / deleteall / truncate / truncate_preserve</a></li>
+      </ul>
+    </li>
+    <li><a href="#tools">tools</a></li>
+    <li><a href="#replication">replication</a></li>
+    <li><a href="#snapshots">snapshots</a></li>
+    <li><a href="#configuration">configuration</a></li>
+    <li><a href="#quotas">quotas</a></li>
+    <li><a href="#security">security</a></li>
+    <li><a href="#procedures">procedures</a></li>
+    <li><a href="#visibility-labels">visibility labels</a></li>
+  </ul>
 </nav>
   </aside>
 

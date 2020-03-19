@@ -18,7 +18,9 @@ headless: true
   * [_压缩和编码]({{< relref "/docs/Core/Compression-and-Data-Block-Encoding.md" >}})
   * 写路径和优化
   * 读路径和优化
+  * LSM Tree
 * **Action**
+  * [Delete 操作语义]({{< relref "/docs/Action/Delete-API.md" >}})
   * [HFile Tool 查看 HFile]({{< relref "/docs/Action/Hfile-Pretty-Printer.md" >}})
   * [如何使用 Bulk Loading]({{< relref "/docs/Action/How-To-Use-Hbase-Bulk-Loading.md" >}})
   * YCSB 测试

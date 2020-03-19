@@ -7,7 +7,7 @@
 <title>Family Properties | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,13 +116,10 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="hbase-列族配置">HBase 列族配置</h1>
-
+<article class="markdown"><h1 id="hbase-列族配置">HBase 列族配置</h1>
 <p>创建一个测试表（<code>test</code>），列族名为 <code>f</code></p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; create <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span><span style="color:#f92672">}</span></code></pre></div>
-<p>默认属性如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; create <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span><span style="color:#f92672">}</span>
+</code></pre></div><p>默认属性如下：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase&gt; describe <span style="color:#e6db74">&#39;test&#39;</span>
 
 <span style="color:#f92672">{</span>
@@ -131,145 +135,108 @@ https://github.com/alex-shpak/hugo-book
  BLOCKSIZE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;65536&#39;</span>, 
  IN_MEMORY <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;false&#39;</span>,
  REPLICATION_SCOPE <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;0&#39;</span>
-<span style="color:#f92672">}</span></code></pre></div>
-<!--more--->
-
+<span style="color:#f92672">}</span>
+</code></pre></div><!-- raw HTML omitted -->
 <h1 id="基本属性">基本属性</h1>
-
-<h2 id="bloomfilter-布隆过滤器">BLOOMFILTER(布隆过滤器)</h2>
-
+<h2 id="bloomfilter布隆过滤器">BLOOMFILTER(布隆过滤器)</h2>
 <p><strong>布隆过滤器 可以判断数据不存在</strong>，当判断结果存在时，数据可能真的存在，也可能不存在。可选的值有 三个 <code>NONE</code>, <code>ROW</code> (default), <code>ROWCOL</code>。</p>
-
 <p>当开启 布隆过滤器 时，<strong>可以判断要查询的数据不存在在表中</strong>，从而避免查表。</p>
-
 <p>行级（<code>ROW</code>）布隆过滤器在数据块里<strong>检查特定行键是否不存在</strong>，列标识符级（<code>ROWCOL</code>）布隆过滤器<strong>检查行和列标识符联合体是否不存在</strong>。<code>ROWCOL</code>布隆过滤器的开销高于<code>ROW</code>布隆过滤器。</p>
-
-<h2 id="versions-cell数据版本">VERSIONS(Cell数据版本)</h2>
-
+<h2 id="versionscell数据版本">VERSIONS(Cell数据版本)</h2>
 <p>0.96版本默认是3个， 0.98版本之后是1， 要根据业务来划分，版本是历史记录，版本增多意味空间消耗。</p>
-
 <p>插入数据的时候，版本默认是当前时间；查询的时候可以指定要获取的版本个数 <code>get 'test', 'rk1',  { COLUMN =&gt; 'f',  VERSIONS =&gt; 100}</code>；</p>
-
 <p>获取多个版本的时候，多个数据是按照 时间戳倒序排序，也可以通过这个特性，来保存类似于事件发生的数据，查询时间历史的时候，拿出来的数据是按照时间排好序，如果要拿最新的事件，不指定版本即可。</p>
-
 <p>版本的时间戳，也可以自定义，不使用默认生成的时间戳，可以自己指定业务相关的ID</p>
-
-<h2 id="min-versions-最少保留的版本数">MIN_VERSIONS(最少保留的版本数)</h2>
-
+<h2 id="min_versions最少保留的版本数">MIN_VERSIONS(最少保留的版本数)</h2>
 <p>如果所有的版本都超期了，至少要保留<code>MIN_VERSIONS</code>个版本</p>
-
-<h2 id="keep-deleted-cells-保留删除的单元格">KEEP_DELETED_CELLS(保留删除的单元格)</h2>
-
+<h2 id="keep_deleted_cells保留删除的单元格">KEEP_DELETED_CELLS(保留删除的单元格)</h2>
 <p>HBase 的<code>delete</code>命令，并不是真的删除数据，而是设置一个标记（<code>delete marker</code>）。用户在检索数据的时候，会过滤掉这些标示的数据。
 该属性可以设置为 <code>FALSE</code>（默认）、<code>TRUE</code>、<code>TTL</code>。API 的注释里对这三种属性有详细描述：如下</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> <span style="color:#a6e22e">org</span>.<span style="color:#a6e22e">apache</span>.<span style="color:#a6e22e">hadoop</span>.<span style="color:#a6e22e">hbase</span>;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> org.apache.hadoop.hbase<span style="color:#f92672">;</span>
 
-<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">enum</span> KeepDeletedCells {
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> KeepDeletedCells <span style="color:#f92672">{</span>
 
   <span style="color:#75715e">/** 不保留删除的单元格. */</span>
-  FALSE,
+  FALSE<span style="color:#f92672">,</span>
   
   <span style="color:#75715e">/**
 </span><span style="color:#75715e">   * 删除的单元格会保留，超期（TTL）或者数据版本数超过 VERSIONS 设置的值 才会被删除。
 </span><span style="color:#75715e">   * 如果没有指定TTL或没有超出VERSIONS值，则会永久保留它们。
 </span><span style="color:#75715e">   */</span>
-  TRUE,
+  TRUE<span style="color:#f92672">,</span>
   
   <span style="color:#75715e">/**
 </span><span style="color:#75715e">   * 超期（TTL）才会删除
 </span><span style="color:#75715e">   * 当TTL与MIN_VERSIONS结合使用时，会删除过期后的数据，但是同时会保留最少数量的版本。
 </span><span style="color:#75715e">   */</span>
-  TTL;
-}</code></pre></div>
-<blockquote>
+  TTL<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><blockquote>
 <p><a href="http://hbase.apache.org/book.html#cf.keep.deleted">41. Keeping Deleted Cells</a></p>
 </blockquote>
-
 <p>major_compact</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">alter <span style="color:#e6db74">&#39;test&#39;</span>, NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">100</span>
 
 put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;k1&#39;</span> , <span style="color:#e6db74">&#39;f:c&#39;</span>, <span style="color:#ae81ff">123</span>
 put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;k1&#39;</span> , <span style="color:#e6db74">&#39;f:c&#39;</span>, <span style="color:#ae81ff">456</span>
-scan <span style="color:#e6db74">&#39;test&#39;</span>,<span style="color:#f92672">{</span>VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">100</span><span style="color:#f92672">}</span>
-alter <span style="color:#e6db74">&#39;test&#39;</span> , NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span>, KEEP_DELETED_CELLS <span style="color:#f92672">=</span>&gt; true</code></pre></div>
-<h2 id="compression-压缩">COMPRESSION(压缩)</h2>
+scan <span style="color:#e6db74">&#39;test&#39;</span>,<span style="color:#f92672">{</span>VERSIONS <span style="color:#f92672">=</span>&gt; 100<span style="color:#f92672">}</span>
+alter <span style="color:#e6db74">&#39;test&#39;</span> , NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span>, KEEP_DELETED_CELLS <span style="color:#f92672">=</span>&gt; true
 
+
+
+</code></pre></div><h2 id="compression压缩">COMPRESSION(压缩)</h2>
 <p>数据压缩是 HBase 提供的一个特性，HBase 在写入数据块到 HDFS 之前会首<strong>先对数据块进行压缩，再落盘</strong>，从而可以减少磁盘空间使用量。
 而在读数据的时候首先从HDFS中加载出block块之后<strong>进行解压缩，然后再缓存到BlockCache</strong>，最后返回给用户。</p>
-
 <p>写路径和读路径分别如下</p>
-
 <p><strong>写路径</strong>： <em>Finish DataBlock</em>  &ndash;&gt;  <em>Encoding KVs</em>  &ndash;&gt;  <strong><code>Compress DataBlock</code></strong>  &ndash;&gt;  <em>Flush</em>
 <strong>读路径</strong>： <em>Read Block From Disk</em>  &ndash;&gt;  <strong><code>DeCompress DataBlock</code></strong>  &ndash;&gt;  <em>Cache DataBlock</em>  &ndash;&gt;  <em>Decoding Scan KVs</em></p>
-
 <p>压缩可以<strong>节省空间</strong>，读写数据会<strong>增加CPU负载</strong>，HBase目前提供了三种常用的压缩方式： GZip, LZO, <strong><code>Snappy</code></strong>；
 <strong><code>Snappy</code></strong> 的压缩率最低，但是编解码速率最高，对CPU的消耗也最小，目前一般建议使用 <strong><code>Snappy</code></strong>。</p>
-
 <blockquote>
 <p><a href="http://blog.csdn.net/javastart/article/details/51820212">HBase最佳实践－列族设计优化</a></p>
 </blockquote>
-
-<h2 id="data-block-encoding-编码">DATA_BLOCK_ENCODING（编码）</h2>
-
+<h2 id="data_block_encoding编码">DATA_BLOCK_ENCODING（编码）</h2>
 <p>除了数据压缩之外，HBase还提供了数据编码功能。
 和压缩一样，数据在落盘之前首先会对KV数据进行编码；但又<strong>和压缩不同，数据块在缓存前并没有执行解码</strong>。
 因此即使后续<strong>命中缓存的查询是编码的数据块，需要解码后才能获取到具体的KV数据</strong>。
 和不编码情况相比，相同数据block快占用内存更少，即<strong>内存利用率更高</strong>，但是读取的时候需要解码，又不利于读性能；
 在内存不足的情况下，可以压榨 CPU 字段，换区更多的缓存数据；
 HBase目前提供了四种常用的编码方式：  <strong><code>Prefix_Tree</code></strong>、 Diff 、 Fast_Diff 、Prefix</p>
-
 <p>写路径和读路径分别如下：</p>
-
 <p><strong>写路径</strong>： <em>Finish DataBlock</em>  &ndash;&gt;  <strong><code>Encoding KVs</code></strong>  &ndash;&gt;  <em>Compress DataBlock</em>  &ndash;&gt;  <em>Flush</em>
 <strong>读路径</strong>： <em>Read Block From Disk</em>  &ndash;&gt;  <em>DeCompress DataBlock</em>  &ndash;&gt;  <em>Cache DataBlock</em>  &ndash;&gt;  <strong><code>Decoding Scan KVs</code></strong></p>
-
 <blockquote>
 <p><a href="http://zjushch.iteye.com/blog/1843793">HBase-0.96中新BlockEncoding算法-PREFIX_TREE压缩的初步探究及测试</a></p>
 </blockquote>
-
-<h2 id="ttl-存活时间">TTL(存活时间)</h2>
-
+<h2 id="ttl存活时间">TTL(存活时间)</h2>
 <p>当数据记录一段时间想删除掉，设置一个时间，超过后会被设置删除标记，单位是 s（秒），超过这个时间数据的就会在下一次大合并中被删除</p>
-
-<h2 id="blockcache-数据块缓存的配置">BLOCKCACHE(数据块缓存的配置)</h2>
-
+<h2 id="blockcache数据块缓存的配置">BLOCKCACHE(数据块缓存的配置)</h2>
 <p>如果 <strong>经常顺序访问（scan）</strong> 或很少被随机访问，可以关闭列族的缓存；列族缓存默认是 true</p>
-
-<h2 id="blocksize-数据块大小配置">BLOCKSIZE(数据块大小配置)</h2>
-
+<h2 id="blocksize数据块大小配置">BLOCKSIZE(数据块大小配置)</h2>
 <p>默认是64K（65536，单位是字节）； 跟 HDFS 不是一个概念，仅仅是 HBase 内部的一个属性；数据块越小，索引越大，占用内存也越大；</p>
-
 <blockquote>
 <p>随着BlockSize的增大，系统随机读的吞吐量不断降低，延迟不断增大。64K大小比16K大小的吞吐量大约降低13%，延迟增大13%。
 同样的，128K大小比64K大小的吞吐量降低约22%，延迟增大27%。
 <strong>如果业务请求以Get请求为主，可以考虑将块大小设置较小；如果以Scan请求为主，可以将块大小调大</strong></p>
-
 <p><a href="http://blog.csdn.net/javastart/article/details/51820212">HBase最佳实践－列族设计优化</a></p>
 </blockquote>
-
-<h2 id="in-memory-激进缓存的配置">IN_MEMORY(激进缓存的配置)</h2>
-
+<h2 id="in_memory激进缓存的配置">IN_MEMORY(激进缓存的配置)</h2>
 <p>可以选择一个列族赋予更高的优先级缓存, 激进缓存，表示优先级更高，IN_MEMORY 默认是 false</p>
-
-<h2 id="replication-scope-复制">REPLICATION_SCOPE(复制)</h2>
-
+<h2 id="replication_scope复制">REPLICATION_SCOPE(复制)</h2>
 <p>通过 HBase 的 replication 功能可以实现集群间的相互复制。</p>
-
 <blockquote>
 <p><a href="http://lib.csdn.net/article/hbase/43717">Hbase Replication 介绍</a>
 <a href="http://hbase.apache.org/book.html#_cluster_replication">150. Cluster Replication</a></p>
 </blockquote>
-
 <h1 id="read-more">Read More</h1>
-
 <ul>
 <li><a href="http://hbase.apache.org/apidocs/constant-values.html"><strong>HBase API 常量</strong></a></li>
 <li><a href="http://hbase.apache.org/book.html#perf.schema">113. Schema Design</a>
-
 <ul>
 <li><a href="http://hbase.apache.org/book.html#schema.bloom">113.4. Bloom Filters</a></li>
 <li><a href="http://hbase.apache.org/book.html#cf.keep.deleted">41. Keeping Deleted Cells</a></li>
-</ul></li>
+</ul>
+</li>
 </ul>
 </article>
 
@@ -301,24 +268,19 @@ HBase目前提供了四种常用的编码方式：  <strong><code>Prefix_Tree</c
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#hbase-列族配置">HBase 列族配置</a></li>
-<li><a href="#基本属性">基本属性</a>
-<ul>
-<li><a href="#bloomfilter-布隆过滤器">BLOOMFILTER(布隆过滤器)</a></li>
-<li><a href="#versions-cell数据版本">VERSIONS(Cell数据版本)</a></li>
-<li><a href="#min-versions-最少保留的版本数">MIN_VERSIONS(最少保留的版本数)</a></li>
-<li><a href="#keep-deleted-cells-保留删除的单元格">KEEP_DELETED_CELLS(保留删除的单元格)</a></li>
-<li><a href="#compression-压缩">COMPRESSION(压缩)</a></li>
-<li><a href="#data-block-encoding-编码">DATA_BLOCK_ENCODING（编码）</a></li>
-<li><a href="#ttl-存活时间">TTL(存活时间)</a></li>
-<li><a href="#blockcache-数据块缓存的配置">BLOCKCACHE(数据块缓存的配置)</a></li>
-<li><a href="#blocksize-数据块大小配置">BLOCKSIZE(数据块大小配置)</a></li>
-<li><a href="#in-memory-激进缓存的配置">IN_MEMORY(激进缓存的配置)</a></li>
-<li><a href="#replication-scope-复制">REPLICATION_SCOPE(复制)</a></li>
-</ul></li>
-<li><a href="#read-more">Read More</a></li>
-</ul>
+  <ul>
+    <li><a href="#bloomfilter布隆过滤器">BLOOMFILTER(布隆过滤器)</a></li>
+    <li><a href="#versionscell数据版本">VERSIONS(Cell数据版本)</a></li>
+    <li><a href="#min_versions最少保留的版本数">MIN_VERSIONS(最少保留的版本数)</a></li>
+    <li><a href="#keep_deleted_cells保留删除的单元格">KEEP_DELETED_CELLS(保留删除的单元格)</a></li>
+    <li><a href="#compression压缩">COMPRESSION(压缩)</a></li>
+    <li><a href="#data_block_encoding编码">DATA_BLOCK_ENCODING（编码）</a></li>
+    <li><a href="#ttl存活时间">TTL(存活时间)</a></li>
+    <li><a href="#blockcache数据块缓存的配置">BLOCKCACHE(数据块缓存的配置)</a></li>
+    <li><a href="#blocksize数据块大小配置">BLOCKSIZE(数据块大小配置)</a></li>
+    <li><a href="#in_memory激进缓存的配置">IN_MEMORY(激进缓存的配置)</a></li>
+    <li><a href="#replication_scope复制">REPLICATION_SCOPE(复制)</a></li>
+  </ul>
 </nav>
   </aside>
 

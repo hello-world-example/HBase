@@ -7,7 +7,7 @@
 <title>Stand Alone C D H Docker | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,22 +116,21 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="docker-搭建单机-cdh-环境">Docker 搭建单机 CDH 环境</h1>
-
+<article class="markdown"><h1 id="docker-搭建单机-cdh-环境">Docker 搭建单机 CDH 环境</h1>
 <blockquote>
 <ul>
-<li><p><a href="https://www.cloudera.com/downloads/quickstart_vms/5-13.html">QuickStarts for CDH 5.13</a> 官方下载地址</p></li>
-
-<li><p><a href="https://docs.cloudera.com/documentation/enterprise/5-13-x/topics/quickstart_docker_container.html">Cloudera Docker Container 官方文档</a></p></li>
-
-<li><p><a href="https://hub.docker.com/r/cloudera/quickstart">cloudera/quickstart 仓库</a></p></li>
+<li>
+<p><a href="https://www.cloudera.com/downloads/quickstart_vms/5-13.html">QuickStarts for CDH 5.13</a> 官方下载地址</p>
+</li>
+<li>
+<p><a href="https://docs.cloudera.com/documentation/enterprise/5-13-x/topics/quickstart_docker_container.html">Cloudera Docker Container 官方文档</a></p>
+</li>
+<li>
+<p><a href="https://hub.docker.com/r/cloudera/quickstart">cloudera/quickstart 仓库</a></p>
+</li>
 </ul>
 </blockquote>
-
 <h2 id="使用-docker-安装">使用 Docker 安装</h2>
-
 <blockquote>
 <ul>
 <li><a href="https://docs.docker.com/docker-for-mac/">MAC 设置 Docker 内存</a></li>
@@ -140,13 +146,13 @@ https://github.com/alex-shpak/hugo-book
 </span><span style="color:#ae81ff"></span>		--hostname<span style="color:#f92672">=</span>quickstart.cloudera <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>		--privileged<span style="color:#f92672">=</span>true <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>		--name<span style="color:#f92672">=</span>cdh-5.13 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">81</span>:80 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">2181</span>:2181 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">9092</span>:9092 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">60010</span>:60010 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">60000</span>:60000 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">8888</span>:8888 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>		-p <span style="color:#ae81ff">7180</span>:7180 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 81:80 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 2181:2181 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 9092:9092 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 60010:60010 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 60000:60000 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 8888:8888 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>		-p 7180:7180 <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>		cloudera/quickstart bash -c <span style="color:#e6db74">&#34;while true; do echo noting; sleep 1; done&#34;</span>
 		<span style="color:#75715e"># /usr/bin/docker-quickstart</span>
 
@@ -169,7 +175,8 @@ https://github.com/alex-shpak/hugo-book
 
 		
 <span style="color:#75715e"># 默认是没有开启 CM 服务的，需要手动开启（默认账户： cloudera/cloudera ）</span>
-<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ sudo /home/cloudera/cloudera-manager --force --express</code></pre></div></article>
+<span style="color:#f92672">[</span>root@quickstart /<span style="color:#f92672">]</span> ᐅ sudo /home/cloudera/cloudera-manager --force --express
+</code></pre></div></article>
 
       
 <div class="book-footer justify-between">
@@ -199,12 +206,9 @@ https://github.com/alex-shpak/hugo-book
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#docker-搭建单机-cdh-环境">Docker 搭建单机 CDH 环境</a>
-<ul>
-<li><a href="#使用-docker-安装">使用 Docker 安装</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#使用-docker-安装">使用 Docker 安装</a></li>
+  </ul>
 </nav>
   </aside>
 

@@ -1,79 +1,99 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/_sidebar/</loc>
-    <lastmod>2020-02-06T16:14:08+08:00</lastmod>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Action/Delete-API/</loc>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Action/Hfile-Pretty-Printer/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Cli/HBase-Shell/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-05T23:26:23+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Core/Architecture/</loc>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Core/Compression-and-Data-Block-Encoding/</loc>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Core/Family-Properties/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Core/Filter/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Core/Port/</loc>
-    <priority>0</priority>
+    <lastmod>2020-02-03T18:48:46+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</loc>
-    <priority>0</priority>
+    <lastmod>2020-02-07T17:28:39+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://hello-world-example.github.io/HBase/docs/Core/Wirte-Path/</loc>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Install/Properties/</loc>
-    <priority>0</priority>
+    <lastmod>2020-01-04T19:16:33+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-By-Docker/</loc>
-    <priority>0</priority>
+    <lastmod>2020-02-03T18:48:46+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-CDH-Docker/</loc>
-    <priority>0</priority>
+    <lastmod>2020-02-03T18:48:46+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</loc>
-    <priority>0</priority>
+    <lastmod>2019-12-27T14:55:46+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/todo/</loc>
-    <priority>0</priority>
+    <lastmod>2019-12-27T14:55:46+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/docs/</loc>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://hello-world-example.github.io/HBase/</loc>
-    <lastmod>2020-01-05T23:26:23+08:00</lastmod>
+    <lastmod>2020-03-16T18:54:32+08:00</lastmod>
   </url>
   
 </urlset>

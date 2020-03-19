@@ -7,7 +7,7 @@
 <title>How to Use Hbase Bulk Loading | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,26 +116,17 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="如何使用-bulk-loading">如何使用 Bulk Loading</h1>
-
+<article class="markdown"><h1 id="如何使用-bulk-loading">如何使用 Bulk Loading</h1>
 <blockquote>
 <p>原文地址：<a href="http://blog.cloudera.com/blog/2013/09/how-to-use-hbase-bulk-loading-and-why/">How-to: Use HBase Bulk Loading, and Why</a></p>
 </blockquote>
-
 <p>Apache HBase 为您提供对大数据的 <strong>随机、实时、读/写</strong> 访问，如何有效地将数据迁移到到 HBase 呢？
 用户可以尝试通过 <strong>客户端API</strong> 或使用 <strong><code>MapReduce</code>作业<code>TableOutputFormat</code>输出格式</strong>，但这些方法存在一些问题，下面会说到。
 <strong>HBase bulk loading(批量加载)</strong> 功能更易于使用，并且可以更快地插入相同数量的数据</p>
-
 <p>本博客文章将介绍 bulk loading(批量加载) 功能的基本概念，介绍两种使用场景，并展示了两个例子。</p>
-
-<!--more-->
-
+<!-- raw HTML omitted -->
 <h1 id="bulk-loading-概述">Bulk Loading 概述</h1>
-
 <p>如果您使用传统方式（API、MapReduce）会有下面这些问题，bulk loading(批量加载) 可能是您的正确选择：</p>
-
 <ul>
 <li>您需要调整 MemStore 来获取更大的内存。</li>
 <li>您需要使用更大的WAL或完全绕过它们。</li>
@@ -136,30 +134,22 @@ https://github.com/alex-shpak/hugo-book
 <li>您的GC失控，因为您的插入数据量很大。</li>
 <li>导入数据时，您的延迟超出SLA（Service-Level Agreement，《SRE：Google运维解密》一书中有介绍）</li>
 </ul>
-
 <p>大多数这些症状通常被称为“成长中的痛苦”（growing pains）。使用批量加载可以帮助您避免它们。</p>
-
 <p>在HBase中，bulk loading 是准备和加载<code>HFiles</code>（HBase自己的文件格式）到<code>RegionServers</code>中的过程，
 因此<strong>绕过了写入路径</strong>并完全避免了上述那些问题。此过程与ETL类似，如下所示：</p>
-
-<h2 id="1-从资源中提取数据-通常是文本文件或其他数据库">1.从资源中提取数据，通常是文本文件或其他数据库</h2>
-
+<h2 id="1从资源中提取数据通常是文本文件或其他数据库">1.从资源中提取数据，通常是文本文件或其他数据库</h2>
 <p>HBase不管理数据提取这部分过程。
 换句话说，你不能通过直接从 MySQL 读取 <code>HFiles</code> 来告诉HBase准备HFile，相反，<strong>你必须以自己的方式来完成数据抽取</strong>。
 例如，您可以在一个表上运行<code>mysqldump</code>并将结果文件上传到<code>HDFS</code>，或者获取您的Apache HTTP日志文件。
 无论如何，在下一步之前，您的数据需要上传到 HDFS。</p>
-
 <blockquote>
 <p>实际上在本地磁盘也可以，如果数据量一台机器可以承受的话；
 Hadoop 的 默认文件系统是本地文件系统 &ldquo;fs.defaultFS=file:///&rdquo;</p>
 </blockquote>
-
-<h2 id="2-将数据转换成hfile">2.将数据转换成HFile</h2>
-
+<h2 id="2将数据转换成hfile">2.将数据转换成HFile</h2>
 <p>这一步需要MapReduce作业，对于大多数输入类型，您必须自己编写Mapper。
 作业将需要发出<code>row key</code>作为输出键，以及<code>KeyValue</code>，<code>Put</code>或<code>Delete</code>作为输出值。
 Reducer由HBase负责处理; 您可以使用 <strong>HFileOutputFormat.configureIncrementalLoad（）</strong> 对其进行配置，并执行以下操作：</p>
-
 <ul>
 <li>检查表以配置分区器（partitioner）</li>
 <li>将分区文件上传到群集并将其添加到 DistributedCache（Uploads the partitions file to the cluster and adds it to the DistributedCache）</li>
@@ -167,205 +157,166 @@ Reducer由HBase负责处理; 您可以使用 <strong>HFileOutputFormat.configure
 <li>设置<strong>输出键/值类</strong>以匹配<code>HFileOutputFormat</code>的要求</li>
 <li>将reducer设置为执行适当的排序（<code>KeyValueSortReducer</code>或<code>PutSortReducer</code>）（Sets the reducer up to perform the appropriate sorting ）</li>
 </ul>
-
 <p>在此阶段，将在输出文件夹的每个region创建一个HFile。
 请记住，输入数据几乎被完全重写，所以您至少需要比原始数据集的大小多两倍的可用磁盘空间。
 例如，对于<code>100GB</code>的<code>mysqldump</code>，HDFS中至少应有<code>200GB</code>的可用磁盘空间。 您可以在流程结束时删除转储文件。</p>
-
 <blockquote>
 <p>这一步应该是整个 Bulk Loading 中工作量最多的一步，因为需要自定义 MapReduce  Mapper，来解析第一步导入 HDFS 的原始数据
 Mapper 的输出类型一般是 <code>ImmutableBytesWritable</code>（row key）, <code>KeyValue</code>（列族、列限定符、时间戳、值）
 最新版可以使用 HFileOutputFormat2 来代替 HFileOutputFormat</p>
 </blockquote>
-
-<h2 id="3-通过告诉regionservers在哪里找到它们-将文件加载到hbase中">3.通过告诉RegionServers在哪里找到它们，将文件加载到HBase中</h2>
-
+<h2 id="3通过告诉regionservers在哪里找到它们将文件加载到hbase中">3.通过告诉RegionServers在哪里找到它们，将文件加载到HBase中</h2>
 <p>这是最简单的一步。它需要使用<code>LoadIncrementalHFiles</code>（通常称为<a href="http://hbase.apache.org/book.html#completebulkload"><code>completebulkload</code></a>工具），
 并通过向其传递一个URL来定位<code>HDFS</code>中<code>HFile</code>文件，
 它将通过服务它的<code>RegionServer</code>将每个文件加载到相关区域。
 如果在创建文件后分割区域，该工具将根据新边界自动分割<code>HFile</code>。
 这个过程效率不高，所以如果你的表目前正在被其他进程写入，最好在第二步完成后立即加载生成的HFile文件。</p>
-
 <p>下图是这个过程的描述。数据流从原始数据源流向HDFS，RegionServers只需将文件移动到其区域的目录。</p>
-
 <h1 id="使用场景">使用场景</h1>
-
 <p><strong>原始数据集加载</strong>：从另一个数据存储库迁移数据， 所有用户都应考虑此用例。
 首先，你必须学习 并设计表，然后创建表 和 预分割。
 切割点必须考虑 row key 分配和 RegionServer 的数量。</p>
-
 <p>这样做的好处是直接写入文件要比通过RegionServer的写入路径（写入MemStore和WAL）并最终刷新，压缩等快得多。
 这也意味着您不必为导入数据时繁重的工作负载调整群集，然后再为您正常工作时负载调整它。</p>
-
 <p><strong>增量加载</strong>：假设您有一些数据集当前由HBase提供服务，但是现在您需要从第三方批量导入更多数据，或者您有一个每晚需要插入数千兆字节的作业。
 它可能不像HBase已经提供的数据集那么大，但它可能会影响你的正常服务，使其延迟增加。
 通过正常的写入路径将导致在导入过程中触发很多 flush 和压缩（compactions）等不利影响。
 这种额外的IO压力将与您正常的服务查询相竞争。</p>
-
 <blockquote>
 <p>Bulk Loading 支持<strong>初始化导入</strong> 和 <strong>增量导入</strong></p>
 </blockquote>
-
 <h1 id="示例">示例</h1>
-
 <p>您可以在您自己的Hadoop集群中使用以下示例，也可以使用 <a href="https://www.cloudera.com/downloads/quickstart_vms/5-12.html">Cloudera QuickStart VM</a>，它是一个单节点集群镜像，包含一些示例数据。</p>
-
 <h2 id="内置的-tsv-bulk-loader">内置的 TSV Bulk Loader</h2>
-
 <p>HBase附带一个MR作业，可以读取 指定分割符分隔 的文件并直接输出到HBase表中或创建HFile进行批量加载。</p>
-
 <ol>
 <li>获取示例数据并将其上传到HDFS。</li>
 <li>根据预先配置的表，运行ImportTsv作业将文件转换为多个HFile。</li>
 <li>准备并加载HBase中的文件。</li>
 </ol>
-
 <p>第一步是打开控制台并使用以下命令获取示例数据：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -O https://people.apache.org/~jdcryans/word_count.csv</code></pre></div>
-<p>该文件是csv格式，只有两列，第一列是单词，第二列是单词出现的个数，没有任何列标题。现在，将文件上传到HDFS：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hdfs dfs -put word_count.csv </code></pre></div>
-<p>接下来需要转换文件， 首先你需要设计表格。
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl -O https://people.apache.org/~jdcryans/word_count.csv
+</code></pre></div><p>该文件是csv格式，只有两列，第一列是单词，第二列是单词出现的个数，没有任何列标题。现在，将文件上传到HDFS：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hdfs dfs -put word_count.csv 
+</code></pre></div><p>接下来需要转换文件， 首先你需要设计表格。
 为了简单起见，将其称为 &ldquo;wordcount&rdquo; - 列族命名为 &ldquo;f&rdquo;，row key 是 csv文件第一列单词本身。
 创建表格时的最佳做法是根据 rowkey  分布对其进行分割，但对于此示例，我们将创建 五个region 。打开hbase shell：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase shell </code></pre></div>
-<p>运行下面的命令创建表</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">create <span style="color:#e6db74">&#39;wordcount&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span><span style="color:#f92672">}</span>,   <span style="color:#f92672">{</span>SPLITS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;g&#39;</span>, <span style="color:#e6db74">&#39;m&#39;</span>, <span style="color:#e6db74">&#39;r&#39;</span>, <span style="color:#e6db74">&#39;w&#39;</span><span style="color:#f92672">]}</span> </code></pre></div>
-<p>四个分割点将生成五个区域，其中第一个区域以空行键开始。
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase shell 
+</code></pre></div><p>运行下面的命令创建表</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">create <span style="color:#e6db74">&#39;wordcount&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span><span style="color:#f92672">}</span>,   <span style="color:#f92672">{</span>SPLITS <span style="color:#f92672">=</span>&gt; <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;g&#39;</span>, <span style="color:#e6db74">&#39;m&#39;</span>, <span style="color:#e6db74">&#39;r&#39;</span>, <span style="color:#e6db74">&#39;w&#39;</span><span style="color:#f92672">]}</span> 
+</code></pre></div><p>四个分割点将生成五个区域，其中第一个区域以空行键开始。
 为了获得更好的分割点，你也可以做一个快速分析，看看这些词是如何真正分布的。</p>
-
 <p>如果您打开的浏览器访问 http//localhost:60010/，您将看到我们新创建的表及其五个 Region 。</p>
-
 <blockquote>
 <p>HBase 1.0 之后，web 界面的端口变成了 16010，</p>
 </blockquote>
-
 <p>现在是时候完成繁重的工作了。 使用“hadoop”脚本在命令行上调用HBase jar将显示可用工具的列表。
 我们想要的那个被称为<code>importtsv</code>的工具，用法如下：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hadoop jar /usr/lib/hbase/hbase-0.94.6-cdh4.3.0-security.jar importtsv
  ERROR: Wrong number of arguments: <span style="color:#ae81ff">0</span>
- Usage: importtsv -Dimporttsv.columns<span style="color:#f92672">=</span>a,b,c &lt;tablename&gt; &lt;inputdir&gt;</code></pre></div>
-<p>我们要使用的命令行如下：</p>
+ Usage: importtsv -Dimporttsv.columns<span style="color:#f92672">=</span>a,b,c &lt;tablename&gt; &lt;inputdir&gt;
+</code></pre></div><p>我们要使用的命令行如下：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hadoop jar /usr/lib/hbase/hbase-0.94.6-cdh4.3.0-security.jar importtsv <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>-Dimporttsv.separator<span style="color:#f92672">=</span>, <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>-Dimporttsv.bulk.output<span style="color:#f92672">=</span>output <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>-Dimporttsv.columns<span style="color:#f92672">=</span>HBASE_ROW_KEY,f:count wordcount word_count.csv</code></pre></div>
-<blockquote>
+</span><span style="color:#ae81ff"></span>-Dimporttsv.columns<span style="color:#f92672">=</span>HBASE_ROW_KEY,f:count wordcount word_count.csv
+</code></pre></div><blockquote>
 <p><strong>1.0 之后的使用方式略有不同，如下：</strong></p>
-
-<p>$HADOOP_HOME/bin/hadoop jar $HBASE_HOME/lib/hbase-server-1.2.6.jar importtsv \<br />
--Dimporttsv.separator=&ldquo;,&rdquo; \<br />
--Dimporttsv.bulk.output=&ldquo;output&rdquo; \<br />
--Dimporttsv.columns=&ldquo;HBASE_ROW_KEY,f:count&rdquo; \<br />
-wordcount \<br />
+<p>$HADOOP_HOME/bin/hadoop jar $HBASE_HOME/lib/hbase-server-1.2.6.jar importtsv \<br>
+-Dimporttsv.separator=&rdquo;,&rdquo; \<br>
+-Dimporttsv.bulk.output=&quot;output&rdquo; \<br>
+-Dimporttsv.columns=&quot;HBASE_ROW_KEY,f:count&rdquo; \<br>
+wordcount \<br>
 word_count.csv</p>
-
 <p><strong>请确认有如下环境变量（/etc/profile）</strong></p>
-
-<p>export HBASE_HOME=/opt/websuite/hbase-1.2.6<br />
-export HADOOP_CLASSPATH=&ldquo;$HADOOP_CLASSPATH:$HBASE_HOME/lib/*&rdquo;</p>
+<p>export HBASE_HOME=/opt/websuite/hbase-1.2.6<br>
+export HADOOP_CLASSPATH=&quot;$HADOOP_CLASSPATH:$HBASE_HOME/lib/*&rdquo;</p>
 </blockquote>
-
 <p>以下是不同配置项的简要介绍：</p>
-
 <ul>
 <li><code>-Dimporttsv.separator=,</code> 指定分隔符是逗号</li>
 <li><code>-Dimporttsv.bulk.output=output</code> 是HFiles写入的相对路径。由于默认情况下虚拟机上的用户是“cloudera”，这意味着这些文件将位于<code>/user/cloudera/output</code>中。<strong>如果不使用这个选项，数据将直接写入HBase（传统的MapReduce模式）</strong>。</li>
 <li><code>-Dimporttsv.columns=HBASE_ROW_KEY,f:count</code> <code>HBASE_ROW_KEY,f:count</code>是包含在这个文件中的所有列的列表。row key 需要使用全大写的<code>HBASE_ROW_KEY</code>字符串来标识, 否则它不会工作。（这里使用是限定词“count”您也可以指定其他任何内容。）</li>
 </ul>
-
 <p>鉴于输入数据量较小，该任务应在一分钟内完成。请注意，会运行五个Reducers，每个区域一个。以下是HDFS上的执行的结果：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">4265</span>   <span style="color:#ae81ff">2013</span>-09-12 <span style="color:#ae81ff">13</span>:13 output/f/2c0724e0c8054b70bce11342dc91897b
--rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">3163</span>   <span style="color:#ae81ff">2013</span>-09-12 <span style="color:#ae81ff">13</span>:14 output/f/786198ca47ae406f9be05c9eb09beb36
--rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">2487</span>   <span style="color:#ae81ff">2013</span>-09-12 <span style="color:#ae81ff">13</span>:14 output/f/9b0e5b2a137e479cbc978132e3fc84d2
--rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">2961</span>   <span style="color:#ae81ff">2013</span>-09-12 <span style="color:#ae81ff">13</span>:13 output/f/bb341f04c6d845e8bb95830e9946a914
--rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">1336</span>   <span style="color:#ae81ff">2013</span>-09-12 <span style="color:#ae81ff">13</span>:14 output/f/c656d893bd704260a613be62bddb4d5f</code></pre></div>
-<p>正如你所看到的，这些文件目前属于用户“cloudera”。为了加载它们，我们需要将所有者更改为“hbase”，否则HBase将无权移动这些文件。运行以下命令：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo -u hdfs hdfs dfs -chown -R  hbase:hbase /user/cloudera/output</code></pre></div>
-<p>最后，我们需要使用<code>completebulkload</code>工具来指向文件的位置以及我们要加载的表：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles output wordcount </code></pre></div>
-<blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">4265</span>   2013-09-12 13:13 output/f/2c0724e0c8054b70bce11342dc91897b
+-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">3163</span>   2013-09-12 13:14 output/f/786198ca47ae406f9be05c9eb09beb36
+-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">2487</span>   2013-09-12 13:14 output/f/9b0e5b2a137e479cbc978132e3fc84d2
+-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">2961</span>   2013-09-12 13:13 output/f/bb341f04c6d845e8bb95830e9946a914
+-rw-r--r--   <span style="color:#ae81ff">3</span> cloudera cloudera         <span style="color:#ae81ff">1336</span>   2013-09-12 13:14 output/f/c656d893bd704260a613be62bddb4d5f
+</code></pre></div><p>正如你所看到的，这些文件目前属于用户“cloudera”。为了加载它们，我们需要将所有者更改为“hbase”，否则HBase将无权移动这些文件。运行以下命令：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo -u hdfs hdfs dfs -chown -R  hbase:hbase /user/cloudera/output
+</code></pre></div><p>最后，我们需要使用<code>completebulkload</code>工具来指向文件的位置以及我们要加载的表：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hbase org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles output wordcount 
+</code></pre></div><blockquote>
 <p>或</p>
-
 <p>$HADOOP_HOME/bin/hadoop jar $HBASE_HOME/lib/hbase-server-1.2.6.jar completebulkload output wordcount</p>
 </blockquote>
-
 <p>回到HBase shell中，您可以运行count命令来显示加载了多少行。如果你忘了<code>chown</code>，命令会挂起。</p>
-
 <h1 id="自定义-mr-任务">自定义 MR 任务</h1>
-
 <p>TSV批量加载程序适用场景比较局限，由于它将所有内容都解释为字符串，并且不支持特殊的数据格式，所以不得不编写自己的MR作业。
 下面这个例子的 数据包含了 湖人队和凯尔特人队2010年总决赛（第一场）相关的公开Facebook和Twitter消息。,
-你可以在<a href="https://github.com/jrkinley/hbase-bulk-import-example">这里</a>找到代码。（&rdquo; Quick Start VM &ldquo; 带有 git和maven，您可以直接克隆这份代码。）</p>
-
+你可以在<a href="https://github.com/jrkinley/hbase-bulk-import-example">这里</a>找到代码。（&rdquo; Quick Start VM &quot; 带有 git和maven，您可以直接克隆这份代码。）</p>
 <p>看一下Driver类，最重要的部分如下：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">    job.<span style="color:#a6e22e">setMapOutputKeyClass</span>(ImmutableBytesWritable.<span style="color:#a6e22e">class</span>);
-    job.<span style="color:#a6e22e">setMapOutputValueClass</span>(KeyValue.<span style="color:#a6e22e">class</span>);
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">    job<span style="color:#f92672">.</span><span style="color:#a6e22e">setMapOutputKeyClass</span><span style="color:#f92672">(</span>ImmutableBytesWritable<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    job<span style="color:#f92672">.</span><span style="color:#a6e22e">setMapOutputValueClass</span><span style="color:#f92672">(</span>KeyValue<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
 <span style="color:#960050;background-color:#1e0010">…</span>
 	<span style="color:#75715e">// Auto configure partitioner and reducer
-</span><span style="color:#75715e"></span>    HFileOutputFormat.<span style="color:#a6e22e">configureIncrementalLoad</span>(job, hTable);</code></pre></div>
-<p>首先，Mapper需要输出<code>ImmutableBytesWritable</code>类型作为 row key，输出值类型可以是<code>KeyValue</code>，<code>Put</code>或<code>Delete</code>。
+</span><span style="color:#75715e"></span>    HFileOutputFormat<span style="color:#f92672">.</span><span style="color:#a6e22e">configureIncrementalLoad</span><span style="color:#f92672">(</span>job<span style="color:#f92672">,</span> hTable<span style="color:#f92672">);</span>
+</code></pre></div><p>首先，Mapper需要输出<code>ImmutableBytesWritable</code>类型作为 row key，输出值类型可以是<code>KeyValue</code>，<code>Put</code>或<code>Delete</code>。
 第二个片段显示了如何配置<code>Reducer</code>, 它实际上完全由<code>HFileOutputFormat.confgureIncrementalLoad()</code>处理。</p>
-
 <p><code>HBaseKVMapper</code>类只处理了关心的配置、输出键和值的映射器：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">class</span> HBaseKVMapper <span style="color:#a6e22e">extends</span> Mapper<span style="color:#f92672">&lt;</span>LongWritable, Text, ImmutableBytesWritable, KeyValue<span style="color:#f92672">&gt;</span> { 
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">HBaseKVMapper</span> <span style="color:#66d9ef">extends</span> Mapper<span style="color:#f92672">&lt;</span>LongWritable<span style="color:#f92672">,</span> Text<span style="color:#f92672">,</span> ImmutableBytesWritable<span style="color:#f92672">,</span> KeyValue<span style="color:#f92672">&gt;</span> <span style="color:#f92672">{</span> 
 
-}</code></pre></div>
-<p>为了运行它，您需要使用maven编译项目，并按照README中的链接获取数据文件。（它还包含用于创建表的shell脚本。）
+<span style="color:#f92672">}</span>
+</code></pre></div><p>为了运行它，您需要使用maven编译项目，并按照README中的链接获取数据文件。（它还包含用于创建表的shell脚本。）
 在开始作业之前，请不要忘记将文件上传到HDFS，并将您的类路径设置为 HBase的：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export HADOOP_CLASSPATH<span style="color:#f92672">=</span>$HADOOP_CLASSPATH:/etc/hbase/conf/:/usr/lib/hbase/*</code></pre></div>
-<p>使用类似于此命令行的命令行启动作业：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export HADOOP_CLASSPATH<span style="color:#f92672">=</span>$HADOOP_CLASSPATH:/etc/hbase/conf/:/usr/lib/hbase/*
+</code></pre></div><p>使用类似于此命令行的命令行启动作业：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">hadoop jar hbase-examples-0.0.1-SNAPSHOT.jar
 com.cloudera.examples.hbase.bulkimport.Driver -libjars
 /home/cloudera/.m2/repository/joda-time/joda-time/2.1/joda-time-2.1.jar,
 /home/cloudera/.m2/repository/net/sf/opencsv/opencsv/2.3/opencsv-2.3.jar
-<span style="color:#e6db74">&#34;RowFeeder for Celtics and Lakers Game&#34;</span> <span style="color:#ae81ff">1</span>.csv output2 NBAFinal2010</code></pre></div>
-<p>正如你所看到的，工作的依赖关系必须单独添加。最后，您要先更改输出文件的所有者，然后运行<code>completebulkload</code>工具来加载文件：</p>
+<span style="color:#e6db74">&#34;RowFeeder for Celtics and Lakers Game&#34;</span> 1.csv output2 NBAFinal2010
+</code></pre></div><p>正如你所看到的，工作的依赖关系必须单独添加。最后，您要先更改输出文件的所有者，然后运行<code>completebulkload</code>工具来加载文件：</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo -u hdfs hdfs dfs -chown -R hbase:hbase/user/cloudera/output2
-hbase org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles output2 NBAFinal2010 </code></pre></div>
-<h1 id="潜在的问题">潜在的问题</h1>
-
+hbase org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles output2 NBAFinal2010 
+</code></pre></div><h1 id="潜在的问题">潜在的问题</h1>
 <h2 id="最近删除的数据重现">最近删除的数据重现</h2>
-
 <p>当通过批量加载插入<code>Delete</code>时发生此问题，主要是因为 <code>Put</code>仍在<code>MemStore</code>中，这是用进行major压缩。
 当删除处于HFile中时，数据将被视为已删除，但一旦在压缩过程中将其删除，Put将再次变为可见。,
 如果您有这样的用例，请考虑配置您的列族以使用<code>KEEP_DELETED_CELLS</code>将已删除的单元格保留在<code>shell</code>或<code>HColumnDescriptor.setKeepDeletedCells()</code>中。</p>
-
 <h2 id="批量加载的数据不能被其他批量加载覆盖">批量加载的数据不能被其他批量加载覆盖</h2>
-
 <p>当在不同时间加载的两个批量加载的HFile尝试在同一单元中写入不同的值时，会出现此问题，这意味着它们具有相同的行键，系列，限定符和时间戳。
 结果是第一个插入的值将被返回而不是第二个。这个bug将在<code>HBase 0.96.0</code>和<code>CDH 5</code>（下一个CDH主要版本）中得到解决，
 并且<code>HBASE-8521</code>正在为<code>0.94</code>分支和<code>CDH 4</code>完成工作。</p>
-
 <h2 id="批量加载触发-major压缩">批量加载触发 major压缩</h2>
-
 <p>当您<strong>执行增量批量加载时，会出现此问题</strong>，并且有足够的批量加载文件来触发 minor 压缩（默认阈值为3）。
 HFiles的序列号被设置为0，所以当RegionServer选择文件进行压缩时，它们会首先被拾取，并且由于这个bug，它还会选择所有剩余的文件。
 这个问题将严重影响那些已经拥有很大数据 region（数GB）或经常批量加载（每隔几小时或更少）的情况，因为大量数据将被压缩。
 <code>HBase 0.96.0</code>有适当的修复，<code>CDH 5</code>也是如此; <code>HBASE-8521</code>解决了<code>0.94</code>中的问题，因为批量加载的HFile现在被分配了正确的序列号。
 HBASE-8283可以通过<code>hbase.hstore.useExploringCompation</code>在<code>0.94.9</code>和<code>CDH 4.4.0</code>之后启用，以便通过更智能的压缩选择算法来缓解此问题。</p>
-
 <h2 id="批量加载的数据不会被复制">批量加载的数据不会被复制</h2>
-
 <p>当批量加载绕过写入路径时，WAL不会被写入。
 复制通过读取WAL文件来工作，因此它不会看到批量加载的数据 - 使用<code>Put.setWriteToWAL(true)</code>时也是如此。
 处理这种情况的一种方法是将原始文件或HFile发送到其他群集，并在那里进行其load处理。</p>
-
 <h1 id="结论">结论</h1>
-
 <p>本博文的目标是向您介绍Apache HBase批量加载的基本概念。
 我们解释了这个过程是如何进行ETL的，并且它比使用普通API更适合大数据集，因为它绕过了写路径。
 这两个例子包含了如何将简单的TSV文件批量加载到HBase以及如何为其他数据格式编写您自己的Mapper。</p>
-
 <h1 id="read-more">Read More</h1>
-
 <ul>
 <li><a href="https://my.oschina.net/leejun2005/blog/187309">HBase 写优化之 BulkLoad 实现数据快速入库</a>
-
 <ul>
-<li>&gt; 通常 <code>MapReduce</code> 在写HBase时使用的是 <code>TableOutputFormat</code> 方式，在reduce中直接生成<code>Put</code>对象写入<code>HBase</code>， 该方式在大数据量写入时效率低下（HBase会频繁进行<code>flush</code>，<code>split</code>，<code>compact</code>等大量IO操作），并对HBase节点的稳定性造成一定的影响（GC时间过长，响应变慢，导致节点超时退出，并引起一系列连锁反应）。
-&gt; 而HBase支持 <code>bulk load</code> 的入库方式，它是利用hbase的数据信息按照特定格式存储在hdfs内这一原理，直接在HDFS中生成持久化的HFile数据格式文件，然后上传至合适位置，即完成巨量数据快速入库的办法。
-&gt; 配合mapreduce完成，高效便捷，而且不占用region资源，增添负载，在大数据量写入时能极大的提高写入效率，并降低对HBase节点的写入压力。</li>
-</ul></li>
+<li>
+<blockquote>
+<p>通常 <code>MapReduce</code> 在写HBase时使用的是 <code>TableOutputFormat</code> 方式，在reduce中直接生成<code>Put</code>对象写入<code>HBase</code>， 该方式在大数据量写入时效率低下（HBase会频繁进行<code>flush</code>，<code>split</code>，<code>compact</code>等大量IO操作），并对HBase节点的稳定性造成一定的影响（GC时间过长，响应变慢，导致节点超时退出，并引起一系列连锁反应）。
+而HBase支持 <code>bulk load</code> 的入库方式，它是利用hbase的数据信息按照特定格式存储在hdfs内这一原理，直接在HDFS中生成持久化的HFile数据格式文件，然后上传至合适位置，即完成巨量数据快速入库的办法。
+配合mapreduce完成，高效便捷，而且不占用region资源，增添负载，在大数据量写入时能极大的提高写入效率，并降低对HBase节点的写入压力。</p>
+</blockquote>
+</li>
+</ul>
+</li>
 <li><a href="http://blog.pureisle.net/archives/1950.html">MapReduce生成HFile入库到HBase及源码分析</a></li>
 </ul>
 </article>
@@ -398,30 +349,22 @@ HBASE-8283可以通过<code>hbase.hstore.useExploringCompation</code>在<code>0.
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#如何使用-bulk-loading">如何使用 Bulk Loading</a></li>
-<li><a href="#bulk-loading-概述">Bulk Loading 概述</a>
-<ul>
-<li><a href="#1-从资源中提取数据-通常是文本文件或其他数据库">1.从资源中提取数据，通常是文本文件或其他数据库</a></li>
-<li><a href="#2-将数据转换成hfile">2.将数据转换成HFile</a></li>
-<li><a href="#3-通过告诉regionservers在哪里找到它们-将文件加载到hbase中">3.通过告诉RegionServers在哪里找到它们，将文件加载到HBase中</a></li>
-</ul></li>
-<li><a href="#使用场景">使用场景</a></li>
-<li><a href="#示例">示例</a>
-<ul>
-<li><a href="#内置的-tsv-bulk-loader">内置的 TSV Bulk Loader</a></li>
-</ul></li>
-<li><a href="#自定义-mr-任务">自定义 MR 任务</a></li>
-<li><a href="#潜在的问题">潜在的问题</a>
-<ul>
-<li><a href="#最近删除的数据重现">最近删除的数据重现</a></li>
-<li><a href="#批量加载的数据不能被其他批量加载覆盖">批量加载的数据不能被其他批量加载覆盖</a></li>
-<li><a href="#批量加载触发-major压缩">批量加载触发 major压缩</a></li>
-<li><a href="#批量加载的数据不会被复制">批量加载的数据不会被复制</a></li>
-</ul></li>
-<li><a href="#结论">结论</a></li>
-<li><a href="#read-more">Read More</a></li>
-</ul>
+  <ul>
+    <li><a href="#1从资源中提取数据通常是文本文件或其他数据库">1.从资源中提取数据，通常是文本文件或其他数据库</a></li>
+    <li><a href="#2将数据转换成hfile">2.将数据转换成HFile</a></li>
+    <li><a href="#3通过告诉regionservers在哪里找到它们将文件加载到hbase中">3.通过告诉RegionServers在哪里找到它们，将文件加载到HBase中</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#内置的-tsv-bulk-loader">内置的 TSV Bulk Loader</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#最近删除的数据重现">最近删除的数据重现</a></li>
+    <li><a href="#批量加载的数据不能被其他批量加载覆盖">批量加载的数据不能被其他批量加载覆盖</a></li>
+    <li><a href="#批量加载触发-major压缩">批量加载触发 major压缩</a></li>
+    <li><a href="#批量加载的数据不会被复制">批量加载的数据不会被复制</a></li>
+  </ul>
 </nav>
   </aside>
 

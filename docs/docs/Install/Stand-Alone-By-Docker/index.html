@@ -7,7 +7,7 @@
 <title>Stand Alone by Docker | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,28 +116,23 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="docker-安装-hbase">Docker 安装 HBase</h1>
-
+<article class="markdown"><h1 id="docker-安装-hbase">Docker 安装 HBase</h1>
 <blockquote>
 <p>端口描述详见 <a href="/HBase/docs/Core/Port/">Port</a></p>
-
 <p>可选</p>
-
-<p>-p 8084:8080 <br />
--p 8085:8085 <br />
--p 9090:9090 <br />
--p 9095:9095 </p>
+<p>-p 8084:8080<br>
+-p 8085:8085<br>
+-p 9090:9090<br>
+-p 9095:9095 \</p>
 </blockquote>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ docker run -d <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">2181</span>:2181 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">8084</span>:8080 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">8085</span>:8085 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">16000</span>:16000 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">16010</span>:16010 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">16020</span>:16020 <span style="color:#ae81ff">\
-</span><span style="color:#ae81ff"></span>  -p <span style="color:#ae81ff">16030</span>:16030 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 2181:2181 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 8084:8080 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 8085:8085 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 16000:16000 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 16010:16010 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 16020:16020 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -p 16030:16030 <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>  --name hbase <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>  harisekhon/hbase
   
@@ -141,9 +143,8 @@ $$ hbase-daemon.sh start rest -p &lt;port&gt;
 $$ hbase-daemon.sh stop rest
 
 <span style="color:#75715e"># HBase Shell</span>
-$ docker exec -it hbase hbase shell</code></pre></div>
-<h2 id="read-more">Read More</h2>
-
+$ docker exec -it hbase hbase shell
+</code></pre></div><h2 id="read-more">Read More</h2>
 <ul>
 <li>Docker Hub <a href="https://hub.docker.com/r/harisekhon/hbase">harisekhon/hbase</a></li>
 <li>Github <a href="https://github.com/HariSekhon/Dockerfiles">HariSekhon / Dockerfiles</a></li>
@@ -178,12 +179,9 @@ $ docker exec -it hbase hbase shell</code></pre></div>
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#docker-安装-hbase">Docker 安装 HBase</a>
-<ul>
-<li><a href="#read-more">Read More</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
 </nav>
   </aside>
 

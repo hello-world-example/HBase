@@ -7,7 +7,7 @@
 <title>Properties | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,383 +116,228 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="hbase-配置简介">HBase 配置简介</h1>
-
+<article class="markdown"><h1 id="hbase-配置简介">HBase 配置简介</h1>
 <p>获取 HBase 可配置的选项通常有以下方法：</p>
-
 <ul>
 <li><code>org.apache.hadoop.hbase.HConstants</code> 常量类</li>
 <li><code>hbase-common-x.x.x.jar</code> 根目录下的 <code>hbase-default.xml</code> 配置文件</li>
 <li>HMaster Web UI Configuration: <a href="http://localhost:16010/conf">http://localhost:16010/conf</a></li>
 </ul>
-
-<h2 id="core-install">Core / Install</h2>
-
+<h2 id="core--install">Core / Install</h2>
 <p><strong>以下是让 HBase 启动和运行的重要配置</strong></p>
-
-<h3 id="hbase-tmp-dir">hbase.tmp.dir</h3>
-
+<h3 id="hbasetmpdir">hbase.tmp.dir</h3>
 <p>本地文件系统上的临时目录</p>
-
 <p>默认 <code>${java.io.tmpdir}/hbase-${user.name}</code>（<code>/tmp/hbase-${user.name}</code>）, 系统重启会自动清除</p>
-
-<h3 id="hbase-rootdir"><code>hbase.rootdir</code></h3>
-
+<h3 id="hbaserootdir"><code>hbase.rootdir</code></h3>
 <p>HBase 的数据保存目录。
 如果是本地文件系统，必须是全路径；如果是 HDFS <code>hdfs://namenode.example.org:9000/hbase</code></p>
-
 <p>默认 <code>${hbase.tmp.dir}/hbase</code></p>
-
-<h3 id="hbase-fs-tmp-dir">hbase.fs.tmp.dir</h3>
-
+<h3 id="hbasefstmpdir">hbase.fs.tmp.dir</h3>
 <p>默认文件系统（HDFS） 上用于<strong>暂存临时数据</strong>的目录</p>
-
 <p>默认 <code>/user/${user.name}/hbase-staging</code></p>
-
-<h3 id="hbase-bulkload-staging-dir">hbase.bulkload.staging.dir</h3>
-
+<h3 id="hbasebulkloadstagingdir">hbase.bulkload.staging.dir</h3>
 <p>默认文件系统（HDFS）中的<strong>暂存批量加载临时数据</strong>目录</p>
-
 <p>默认 <code>${hbase.fs.tmp.dir}</code></p>
-
-<h3 id="hbase-cluster-distributed"><code>hbase.cluster.distributed</code></h3>
-
+<h3 id="hbaseclusterdistributed"><code>hbase.cluster.distributed</code></h3>
 <p>是否在集群模式下运行。
 独立模式下的值为false，分布式模式下为true。 <strong>如果为false，将在一个JVM中一起运行所有HBase和ZooKeeper守护进程</strong></p>
-
 <p>默认 <code>false</code></p>
-
-<h3 id="hbase-zookeeper-quorum"><code>hbase.zookeeper.quorum</code></h3>
-
+<h3 id="hbasezookeeperquorum"><code>hbase.zookeeper.quorum</code></h3>
 <p>用逗号分隔的 ZooKeeper 服务器的列表。 例如<code>host1.mydomain.com，host2.mydomain.com，host3.mydomain.com</code>。
 默认情况下，<strong>独立模式</strong>和<strong>伪分布式模式</strong> 下为localhost。
 对于完全分布式模式，应该将其设置为ZooKeeper服务器的完整列表。
 如果对<code>hbase-env.sh</code>中<code>HBASE_MANAGES_ZK</code>的设为<code>true</code>，HBase 会把 ZooKeeper 作为群集的一部分 启动（/停止）。
 在客户端，常与<code>hbase.zookeeper.clientPort</code>（Zookeeper 端口）配置放在一起使用，并将其作为<code>connectString</code>参数传递给zookeeper构造函数</p>
-
 <p>默认 <code>localhost</code></p>
-
 <h2 id="master">Master</h2>
-
-<h3 id="hbase-master-port"><code>hbase.master.port</code></h3>
-
+<h3 id="hbasemasterport"><code>hbase.master.port</code></h3>
 <p>HBase Master应绑定的端口。</p>
-
-<p>默认 <code>16000</code></value></p>
-
-<h3 id="hbase-master-info-port"><code>hbase.master.info.port</code></h3>
-
+<p>默认 <code>16000</code><!-- raw HTML omitted --></p>
+<h3 id="hbasemasterinfoport"><code>hbase.master.info.port</code></h3>
 <p>HBase Master Web UI的端口。如果您不想运行UI实例，请将其设置为<code>-1</code>。</p>
-
 <p>默认 <code>16010</code></p>
-
-<h3 id="hbase-master-logcleaner-plugins">hbase.master.logcleaner.plugins</h3>
-
+<h3 id="hbasemasterlogcleanerplugins">hbase.master.logcleaner.plugins</h3>
 <p>清理日志的插件列表，逗号分隔，被<code>LogService</code>调用的<code>LogCleanerDelegate</code>，可以自定义，顺序执行，清理<code>WAL</code>和<code>HLog</code></p>
-
 <p>默认 <code>org.apache.hadoop.hbase.master.cleaner.TimeToLiveLogCleaner</code></p>
-
-<h3 id="hbase-master-logcleaner-ttl">hbase.master.logcleaner.ttl</h3>
-
+<h3 id="hbasemasterlogcleanerttl">hbase.master.logcleaner.ttl</h3>
 <p>HLog在<code>.oldlogdir</code>目录中生存的最长时间，过期则被Master起线程回收，默认是<code>600000</code>；</p>
-
-<h3 id="hbase-master-hfilecleaner-plugins">hbase.master.hfilecleaner.plugins</h3>
-
+<h3 id="hbasemasterhfilecleanerplugins">hbase.master.hfilecleaner.plugins</h3>
 <p>HFile的清理插件列表，逗号分隔，被<code>HFileService</code>调用，可以自定义，</p>
-
 <p>默认 <code>org.apache.hadoop.hbase.master.cleaner.TimeToLiveHFileCleaner</code></p>
-
-<h3 id="hbase-master-catalog-timeout">hbase.master.catalog.timeout</h3>
-
+<h3 id="hbasemastercatalogtimeout">hbase.master.catalog.timeout</h3>
 <p><code>Catalog Janitor</code> 从 master 到 META 的超时时间。Janitor是定时的去META扫描表目录，来决定回收无用的regions</p>
-
 <p>默认 <code>600000</code></p>
-
-<h3 id="hbase-master-infoserver-redirect">hbase.master.infoserver.redirect</h3>
-
+<h3 id="hbasemasterinfoserverredirect">hbase.master.infoserver.redirect</h3>
 <p>Master是否监听Master Web UI端口（<code>hbase.master.info.port</code>）并将请求重定向到由Master和RegionServer共享的Web UI服务器</p>
-
 <p>默认 <code>true</code></p>
-
 <h2 id="regionserver">RegionServer</h2>
-
-<h3 id="hbase-regionserver-port"><code>hbase.regionserver.port</code></h3>
-
+<h3 id="hbaseregionserverport"><code>hbase.regionserver.port</code></h3>
 <p>RegionServer 绑定的端口</p>
-
 <p>默认 <code>60020</code></p>
-
-<h3 id="hbase-regionserver-info-port"><code>hbase.regionserver.info.port</code></h3>
-
+<h3 id="hbaseregionserverinfoport"><code>hbase.regionserver.info.port</code></h3>
 <p>RegionServer 的web界面端口，-1取消界面</p>
-
 <p>默认 <code>60030</code></p>
-
-<h4 id="hbase-regionserver-handler-count">hbase.regionserver.handler.count</h4>
-
+<h4 id="hbaseregionserverhandlercount">hbase.regionserver.handler.count</h4>
 <p>在 RegionServers 上启动 RPC Listener 实例的数。Master 使用相同的属性来计算主处理程序的数量</p>
-
 <p>默认 <code>30</code></p>
-
-<h3 id="hbase-ipc-server-callqueue-handler-factor">hbase.ipc.server.callqueue.handler.factor</h3>
-
+<h3 id="hbaseipcservercallqueuehandlerfactor">hbase.ipc.server.callqueue.handler.factor</h3>
 <p>确定处理队列数量的因子。值为0表示在所有处理程序之间共享单个队列。值为1意味着每个处理程序都有自己的队列。</p>
-
 <p>默认 <code>0.1</code></p>
-
-<h3 id="hbase-ipc-server-callqueue-read-ratio">hbase.ipc.server.callqueue.read.ratio</h3>
-
+<h3 id="hbaseipcservercallqueuereadratio">hbase.ipc.server.callqueue.read.ratio</h3>
 <p>将处理队列分成 读/写 队列，值应该在0.0到1.0之间，该值将乘以呼叫队列的数量。
 值为0表示不分割处理队列，这意味着读取和写入请求都会被推送到同一组队列中。
 低于0.5的值意味着读队列比写队列少。
 值为0.5意味着将有相同数量的读写队列。
 大于0.5的值意味着读队列比写队多对。
 值为1.0意味着所有的队列都用于分派读取请求，只有一个队列用于写。</p>
-
-<p>假设处理队列的总数为10，则：
-- read.ratio为0意味着：10个队列将同时包含读取/写入请求。
-- 0.3的read.ratio表示：3个队列将只包含读取请求，7个队列将只包含写入请求。
-- 0.5的read.ratio表示：5个队列将只包含读取请求，5个队列将只包含写入请求。
-- 0.8的read.ratio意味着：8个队列将只包含读取请求，2个队列将只包含写入请求。
-- 1的read.ratio表示：9个队列将只包含读取请求，1个队列将仅包含写入请求。</p>
-
+<p>假设处理队列的总数为10，则：</p>
+<ul>
+<li>read.ratio为0意味着：10个队列将同时包含读取/写入请求。</li>
+<li>0.3的read.ratio表示：3个队列将只包含读取请求，7个队列将只包含写入请求。</li>
+<li>0.5的read.ratio表示：5个队列将只包含读取请求，5个队列将只包含写入请求。</li>
+<li>0.8的read.ratio意味着：8个队列将只包含读取请求，2个队列将只包含写入请求。</li>
+<li>1的read.ratio表示：9个队列将只包含读取请求，1个队列将仅包含写入请求。</li>
+</ul>
 <p>默认 <code>0</code></p>
-
 <p>​</p>
-
-<h3 id="hbase-ipc-server-callqueue-scan-ratio">hbase.ipc.server.callqueue.scan.ratio</h3>
-
+<h3 id="hbaseipcservercallqueuescanratio">hbase.ipc.server.callqueue.scan.ratio</h3>
 <p>该属性将读取调用队列分为 <strong>小读取和长读取</strong>队列。
 低于0.5的值意味着 短读取队列的长读队列少。
 值为0.5意味着将有相同数量的短读取和长读取队列。
 大于0.5的值意味着将有更多的长读队列比短读队列值
 0或1表示使用同一组队列进行获取和扫描</p>
-
-<p>假设读取调用队列的总数为8：
-- scan.ratio为0或1意味着：8个队列将包含长读请求和短读请求。
-- 0.3的scan.ratio表示：2个队列将只包含长读请求，而6个队列将只包含短读请求。
-- 0.5的scan.ratio表示：4个队列只包含长读请求，4个队列只包含短读请求。
-- 0.8的scan.ratio意味着：6个队列将只包含长读请求，2个队列将只包含短读请求。</p>
-
+<p>假设读取调用队列的总数为8：</p>
+<ul>
+<li>scan.ratio为0或1意味着：8个队列将包含长读请求和短读请求。</li>
+<li>0.3的scan.ratio表示：2个队列将只包含长读请求，而6个队列将只包含短读请求。</li>
+<li>0.5的scan.ratio表示：4个队列只包含长读请求，4个队列只包含短读请求。</li>
+<li>0.8的scan.ratio意味着：6个队列将只包含长读请求，2个队列将只包含短读请求。</li>
+</ul>
 <p>默认 <code>0</code></p>
-
-<h3 id="hbase-regionserver-msginterval">hbase.regionserver.msginterval</h3>
-
+<h3 id="hbaseregionservermsginterval">hbase.regionserver.msginterval</h3>
 <p>RegionServers 向 Master 发消息的间隔</p>
-
 <p>默认 <code>3000</code> 毫秒</p>
-
-<h3 id="hbase-regionserver-logroll-period"><code>hbase.regionserver.logroll.period</code></h3>
-
+<h3 id="hbaseregionserverlogrollperiod"><code>hbase.regionserver.logroll.period</code></h3>
 <p>无论有多少次修改，我们将在此期间滚动提交日志</p>
-
 <p>默认 <code>3600000</code> 毫秒 1小时</p>
-
-<h3 id="hbase-regionserver-optionalcacheflushinterval">hbase.regionserver.optionalcacheflushinterval</h3>
-
+<h3 id="hbaseregionserveroptionalcacheflushinterval">hbase.regionserver.optionalcacheflushinterval</h3>
 <p>一个edit版本在内存中cache的最长时长，设置为0的话则禁止自动flush</p>
-
 <p>默认 <code>3600000</code> 毫秒</p>
-
-<h3 id="hbase-regionserver-region-split-policy"><code>hbase.regionserver.region.split.policy</code></h3>
-
+<h3 id="hbaseregionserverregionsplitpolicy"><code>hbase.regionserver.region.split.policy</code></h3>
 <p>split 政策决定了如何拆分 Region。当前可用的各种拆分策略是：</p>
-
 <ul>
 <li><code>DisabledRegionSplitPolicy</code> 禁用切割</li>
 <li><code>ConstantSizeRegionSplitPolicy</code> 仅仅当region大小超过常量值（<code>hbase.hregion.max.filesize</code>大小）时，才进行拆分
-
 <ul>
 <li><code>IncreasingToUpperBoundRegionSplitPolicy</code> 根据公式<code>min(r^2*flushSize，maxFileSize)</code>确定split的maxFileSize，其中<code>r</code>为该表在线region个数，maxFileSize由<code>hbase.hregion.max.filesize</code>指定
-
 <ul>
 <li><code>SteppingSplitPolicy</code>  根据公式<code>tableRegionsCount == 1  ? hbase.increasing.policy.initial.size : getDesiredMaxFileSize()</code>确定split的maxFileSize</li>
 <li><code>DelimitedKeyPrefixRegionSplitPolicy</code>  保证以分隔符前面的前缀为splitPoint，保证相同RowKey前缀的数据在一个Region中</li>
 <li><code>KeyPrefixRegionSplitPolicy</code> 保证具有相同前缀的row在一个region中（<strong>要求设计中前缀具有同样长度</strong>）。指定rowkey前缀位数划分region，通过读取table的<code>prefix_split_key_policy.prefix_length</code>属性，该属性为数字类型，表示前缀长度，在进行split时，按此长度对splitPoint进行截取。<strong>此种策略比较适合固定前缀的rowkey</strong>。当table中没有设置该属性，或其属性不为Integer类型时，指定此策略效果等同与使用<code>IncreasingToUpperBoundRegionSplitPolicy</code></li>
-</ul></li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
+</li>
+</ul>
 <p>默认 <code>org.apache.hadoop.hbase.regionserver.IncreasingToUpperBoundRegionSplitPolicy</code></p>
-
 <blockquote>
 <p><a href="https://yq.aliyun.com/articles/25849">HBase笔记：Region拆分策略</a></p>
 </blockquote>
-
-<h3 id="hbase-regionserver-regionsplitlimit"><code>hbase.regionserver.regionSplitLimit</code></h3>
-
+<h3 id="hbaseregionserverregionsplitlimit"><code>hbase.regionserver.regionSplitLimit</code></h3>
 <p>限制 Region 数量，达到之后不再发生切割。这不是对 Region 数量的严格限制，而是作为 Region Server 在一定限制后停止分裂的指导原则。</p>
-
 <p>默认 <code>1000</code></p>
-
 <h2 id="hregion">HRegion</h2>
-
-<h3 id="hbase-hregion-memstore-flush-size"><code>hbase.hregion.memstore.flush.size</code></h3>
-
+<h3 id="hbasehregionmemstoreflushsize"><code>hbase.hregion.memstore.flush.size</code></h3>
 <p>Memstore写磁盘的flush阈值，超过这个大小就flush，值由每个<code>hbase.server.thread.wakefrequency</code>运行的线程检查</p>
-
 <p>默认 <code>134217728</code> (128 M)</p>
-
-<h3 id="hbase-hregion-max-filesize"><code>hbase.hregion.max.filesize</code></h3>
-
+<h3 id="hbasehregionmaxfilesize"><code>hbase.hregion.max.filesize</code></h3>
 <p>HStoreFile的最大尺寸，换句话说，当一个region里的列族的任意一个HStoreFile超过这个大小，那么region进行split，</p>
-
 <p>默认 <code>10737418240</code> （10 G ）</p>
-
-<h3 id="hbase-hregion-percolumnfamilyflush-size-lower-bound">hbase.hregion.percolumnfamilyflush.size.lower.bound</h3>
-
+<h3 id="hbasehregionpercolumnfamilyflushsizelowerbound">hbase.hregion.percolumnfamilyflush.size.lower.bound</h3>
 <p>如果使用了<code>FlushLargeStoresPolicy</code>，那么每当我们达到的 总的memstore限制 时，我们就会找出所有其memstore超过此值的列族，
 并且只保留其中的memstore低于此限制的其他列。如果没有一个列族的memstore大小超过这个数量，那么所有的memstore都将被刷新（就像往常一样）。
 该值应该小于总内存阈值（<code>hbase.hregion.memstore.flush.size</code>）的一半</p>
-
 <p>默认 <code>16777216</code> （16M）</p>
-
-<h3 id="hbase-hregion-preclose-flush-size">hbase.hregion.preclose.flush.size</h3>
-
+<h3 id="hbasehregionprecloseflushsize">hbase.hregion.preclose.flush.size</h3>
 <p>如果在关闭 Region 时，某个 Region 内的 memstore 大小超过此大小，会先运行<code>pre-flush</code>以清除 memstore，然后再放置Region关闭标记并使Region脱机。
 关闭时，在关闭标志下运行刷新以清空内存。在此期间，该Region处于离线状态，没有进行任何写入。如果memstore内容很大，则此刷新可能需要很长时间才能完成。
 这个<code>pre-flush</code>意味着清理大部分的 memstore，然后再放置关闭标志并将该区域置于离线状态，这样在关闭标志下运行的flush就很快了。</p>
-
 <p>默认 <code>5242880</code> (5M)</p>
-
-<h3 id="hbase-hregion-majorcompaction"><code>hbase.hregion.majorcompaction</code></h3>
-
+<h3 id="hbasehregionmajorcompaction"><code>hbase.hregion.majorcompaction</code></h3>
 <p>对一个<code>Region</code>的所有<code>HStoreFile</code>进行<code>major compact</code>的时间周期，</p>
-
 <p>默认 <code>604800000</code> 毫秒（7天）；</p>
-
 <h2 id="hstore">HStore</h2>
-
-<h3 id="hbase-hstore-blockingstorefiles"><code>hbase.hstore.blockingStoreFiles</code></h3>
-
+<h3 id="hbasehstoreblockingstorefiles"><code>hbase.hstore.blockingStoreFiles</code></h3>
 <p>如果任何一个Store中存储的StoreFiles数量超过此数量（<strong>每次刷新MemStore时将写入一个StoreFile</strong>），则会更新此HRegion，直到压缩完成 或者 已超出<code>hbase.hstore.blockingWaitTime</code></p>
-
 <p>默认 <code>10</code></p>
-
-<h3 id="hbase-hstore-blockingwaittime"><code>hbase.hstore.blockingWaitTime</code></h3>
-
+<h3 id="hbasehstoreblockingwaittime"><code>hbase.hstore.blockingWaitTime</code></h3>
 <p>HRegion在达到<code>hbase.hstore.blockingStoreFiles</code>定义的StoreFile限制后，开始compaction，如果时间超过该值，即使压缩尚未完成，HRegion也会停止阻塞更新。</p>
-
 <p>默认 <code>90000</code> 毫秒</p>
-
-<h3 id="hbase-hstore-compaction-max"><code>hbase.hstore.compaction.max</code></h3>
-
+<h3 id="hbasehstorecompactionmax"><code>hbase.hstore.compaction.max</code></h3>
 <p>每个minor compaction的HStoreFile个数上限，</p>
-
 <p>默认 <code>10</code></p>
-
-<h3 id="hbase-hstore-compaction-kv-max"><code>hbase.hstore.compaction.kv.max</code></h3>
-
+<h3 id="hbasehstorecompactionkvmax"><code>hbase.hstore.compaction.kv.max</code></h3>
 <p>在<code>flushing</code>或者<code>compacting</code>时可以读取多少个KeyValue并批量写入，如果有大的 KeyValue 或者 OOME 的话则配置一个小的值，如果行数多且小则配置大值</p>
-
 <p>默认 <code>10</code></p>
-
 <h2 id="hfile">HFile</h2>
-
-<h3 id="hfile-block-cache-size"><code>hfile.block.cache.size</code></h3>
-
+<h3 id="hfileblockcachesize"><code>hfile.block.cache.size</code></h3>
 <p>要分配给 HFile和StoreFile 使用的最大堆（-Xmx设置）的百分比。设置为0禁用，但不建议; 您至少需要足够的缓存才能保存存储文件索引</p>
-
 <p>默认 <code>0.4</code>，最大堆配置的 40％ 用来作为缓存</p>
-
-<h3 id="hfile-index-block-max-size">hfile.index.block.max.size</h3>
-
+<h3 id="hfileindexblockmaxsize">hfile.index.block.max.size</h3>
 <p>当多级块索引中的 叶子块、非叶子块、根级索引块的大小增长到此大小时，块将被写出并启动一个新块</p>
-
 <p>默认 <code>131072</code></p>
-
 <h2 id="client">Client</h2>
-
-<h3 id="hbase-client-write-buffer"><code>hbase.client.write.buffer</code></h3>
-
+<h3 id="hbaseclientwritebuffer"><code>hbase.client.write.buffer</code></h3>
 <p>HTable客户端写缓存区的默认字节大小。
 该值越大消耗的内存也就越多，由于服务器端也需要消耗内存来处理传入的数据，客户端与服务器端都会消耗更多的内存
 较大的缓冲区有助于减少RPC调用的次数。例如，服务器端的内存消耗大概等于 <code>hbase.client.write.buffer</code> * <code>hbase.regionserver.handler.count</code> 的值。</p>
-
 <p>默认 <code>2097152</code>（2M）</p>
-
-<h3 id="hbase-client-pause"><code>hbase.client.pause</code></h3>
-
+<h3 id="hbaseclientpause"><code>hbase.client.pause</code></h3>
 <p>在 HBase 操作失败掉的时候进行 暂停 的时间长度</p>
-
 <p>默认 <code>100</code> 毫秒</p>
-
-<h3 id="hbase-client-retries-number"><code>hbase.client.retries.number</code></h3>
-
+<h3 id="hbaseclientretriesnumber"><code>hbase.client.retries.number</code></h3>
 <p>操作失败时的重试次数，结合上一个指标一起来控制总的重试时间</p>
-
 <p>默认 <code>35</code></p>
-
-<h3 id="hbase-client-max-total-tasks"><code>hbase.client.max.total.tasks</code></h3>
-
+<h3 id="hbaseclientmaxtotaltasks"><code>hbase.client.max.total.tasks</code></h3>
 <p>一个HTable实例可以提交给集群的最大并发任务数</p>
-
 <p>默认 <code>100</code></p>
-
-<h3 id="hbase-client-keyvalue-maxsize">hbase.client.keyvalue.maxsize</h3>
-
+<h3 id="hbaseclientkeyvaluemaxsize">hbase.client.keyvalue.maxsize</h3>
 <p>设置 KeyValue实例的最大大小，这是为了协助设置存储文件中单个条目存储的上限。
 这种做法有利于避免单条数据过大不能被拆分的现象，如果用户想绕开这个检查，可以将这个参数设置为0或更少。</p>
-
 <p>默认 <code>10485760</code>（10M）</p>
-
-<h3 id="hbase-client-scanner-max-result-size"><code>hbase.client.scanner.max.result.size</code></h3>
-
+<h3 id="hbaseclientscannermaxresultsize"><code>hbase.client.scanner.max.result.size</code></h3>
 <p>调用扫描器的 <code>next</code> 方法时返回的<strong>最大字节数</strong>。请注意，<strong>当单个行大于此限制时，行仍然完全返回</strong>。默认值是2MB，这对1ge网络很有用。有了更快和/或更高的延迟网络，这个值应该增加。</p>
-
 <p>默认 <code>2097152</code> 2M</p>
-
 <ul>
 <li><a href="https://my.oschina.net/psuyun/blog/375637">HBase中Scan类属性maxResultSize的说明</a></li>
 </ul>
-
-<h3 id="hbase-client-scanner-caching"><code>hbase.client.scanner.caching</code></h3>
-
+<h3 id="hbaseclientscannercaching"><code>hbase.client.scanner.caching</code></h3>
 <p>扫描器调用next方法的时候发现本地客户端内存的数据已经取完，就会向服务端发起请求，该值就是扫描器调用next方法一次性从服务器端返回的<strong>最大行数</strong>。
 该值越大，扫描器整体的返回速度就越快，但同时依赖的内存也就越多，并且当请求的数据没有在内存中命中的话，next方法的返回时间可能会更长，
 因此要避免这个时间长于扫描器超时的时间，即<code>hbase.regionserver.lease.period</code>。
 该配置与<code>hbase.client.scanner.max.result.size</code>一起使用，以便高效地使用网络。</p>
-
 <ul>
 <li>默认值：<code>Integer.MAX_VALUE</code> （2G）</li>
 </ul>
-
-<h3 id="hbase-client-scanner-timeout-period"><code>hbase.client.scanner.timeout.period</code></h3>
-
+<h3 id="hbaseclientscannertimeoutperiod"><code>hbase.client.scanner.timeout.period</code></h3>
 <p>scanner的超时时间</p>
-
 <p>默认 <code>60000</code>毫秒 （1分钟）</p>
-
 <ul>
 <li><a href="http://blog.csdn.net/pangjiuzala/article/details/48023129">HBase基础知识(8):扫描操作之缓存与批量处理</a></li>
 <li><a href="http://blog.csdn.net/rzhzhz/article/details/7536285">由hbase.client.scanner.caching参数引发的血案</a></li>
 <li><a href="https://www.cnblogs.com/panfeng412/archive/2012/03/08/hbase-performance-tuning-section3.html">HBase性能优化方法总结（三）：读表操作</a></li>
 </ul>
-
-<h3 id="hbase-client-max-perserver-tasks">hbase.client.max.perserver.tasks</h3>
-
+<h3 id="hbaseclientmaxperservertasks">hbase.client.max.perserver.tasks</h3>
 <p>一个HTable实例给一台regionserver提交的最大并发任务数</p>
-
 <p>默认 <code>5</code></p>
-
-<h3 id="hbase-client-max-perregion-tasks">hbase.client.max.perregion.tasks</h3>
-
+<h3 id="hbaseclientmaxperregiontasks">hbase.client.max.perregion.tasks</h3>
 <p>客户端保持到单个 Region 的最大并发连接数。也就是说，如果已经有<code>hbase.client.max.perregion.tasks</code>个线程操作该 Region，则新的操作将不会发送到该Region，直到某些写入完成</p>
-
 <p>默认 <code>1</code></p>
-
 <h2 id="miscellaneous">Miscellaneous</h2>
-
-<h3 id="hbase-balancer-period">hbase.balancer.period</h3>
-
+<h3 id="hbasebalancerperiod">hbase.balancer.period</h3>
 <p>在 master 节点中运行 region 负载均衡器的周期</p>
-
 <p>默认 <code>300000</code>毫秒 （5分钟）</p>
-
 <h2 id="read-more">Read More</h2>
-
 <ul>
 <li><a href="http://hbase.apache.org/book.html#config.files">7. Default Configuration</a></li>
 <li><a href="http://blog.sina.com.cn/s/blog_6277623c0102v3jy.html">Hbase配置项简介</a></li>
@@ -521,84 +373,86 @@ https://github.com/alex-shpak/hugo-book
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#hbase-配置简介">HBase 配置简介</a>
-<ul>
-<li><a href="#core-install">Core / Install</a>
-<ul>
-<li><a href="#hbase-tmp-dir">hbase.tmp.dir</a></li>
-<li><a href="#hbase-rootdir"><code>hbase.rootdir</code></a></li>
-<li><a href="#hbase-fs-tmp-dir">hbase.fs.tmp.dir</a></li>
-<li><a href="#hbase-bulkload-staging-dir">hbase.bulkload.staging.dir</a></li>
-<li><a href="#hbase-cluster-distributed"><code>hbase.cluster.distributed</code></a></li>
-<li><a href="#hbase-zookeeper-quorum"><code>hbase.zookeeper.quorum</code></a></li>
-</ul></li>
-<li><a href="#master">Master</a>
-<ul>
-<li><a href="#hbase-master-port"><code>hbase.master.port</code></a></li>
-<li><a href="#hbase-master-info-port"><code>hbase.master.info.port</code></a></li>
-<li><a href="#hbase-master-logcleaner-plugins">hbase.master.logcleaner.plugins</a></li>
-<li><a href="#hbase-master-logcleaner-ttl">hbase.master.logcleaner.ttl</a></li>
-<li><a href="#hbase-master-hfilecleaner-plugins">hbase.master.hfilecleaner.plugins</a></li>
-<li><a href="#hbase-master-catalog-timeout">hbase.master.catalog.timeout</a></li>
-<li><a href="#hbase-master-infoserver-redirect">hbase.master.infoserver.redirect</a></li>
-</ul></li>
-<li><a href="#regionserver">RegionServer</a>
-<ul>
-<li><a href="#hbase-regionserver-port"><code>hbase.regionserver.port</code></a></li>
-<li><a href="#hbase-regionserver-info-port"><code>hbase.regionserver.info.port</code></a>
-<ul>
-<li><a href="#hbase-regionserver-handler-count">hbase.regionserver.handler.count</a></li>
-</ul></li>
-<li><a href="#hbase-ipc-server-callqueue-handler-factor">hbase.ipc.server.callqueue.handler.factor</a></li>
-<li><a href="#hbase-ipc-server-callqueue-read-ratio">hbase.ipc.server.callqueue.read.ratio</a></li>
-<li><a href="#hbase-ipc-server-callqueue-scan-ratio">hbase.ipc.server.callqueue.scan.ratio</a></li>
-<li><a href="#hbase-regionserver-msginterval">hbase.regionserver.msginterval</a></li>
-<li><a href="#hbase-regionserver-logroll-period"><code>hbase.regionserver.logroll.period</code></a></li>
-<li><a href="#hbase-regionserver-optionalcacheflushinterval">hbase.regionserver.optionalcacheflushinterval</a></li>
-<li><a href="#hbase-regionserver-region-split-policy"><code>hbase.regionserver.region.split.policy</code></a></li>
-<li><a href="#hbase-regionserver-regionsplitlimit"><code>hbase.regionserver.regionSplitLimit</code></a></li>
-</ul></li>
-<li><a href="#hregion">HRegion</a>
-<ul>
-<li><a href="#hbase-hregion-memstore-flush-size"><code>hbase.hregion.memstore.flush.size</code></a></li>
-<li><a href="#hbase-hregion-max-filesize"><code>hbase.hregion.max.filesize</code></a></li>
-<li><a href="#hbase-hregion-percolumnfamilyflush-size-lower-bound">hbase.hregion.percolumnfamilyflush.size.lower.bound</a></li>
-<li><a href="#hbase-hregion-preclose-flush-size">hbase.hregion.preclose.flush.size</a></li>
-<li><a href="#hbase-hregion-majorcompaction"><code>hbase.hregion.majorcompaction</code></a></li>
-</ul></li>
-<li><a href="#hstore">HStore</a>
-<ul>
-<li><a href="#hbase-hstore-blockingstorefiles"><code>hbase.hstore.blockingStoreFiles</code></a></li>
-<li><a href="#hbase-hstore-blockingwaittime"><code>hbase.hstore.blockingWaitTime</code></a></li>
-<li><a href="#hbase-hstore-compaction-max"><code>hbase.hstore.compaction.max</code></a></li>
-<li><a href="#hbase-hstore-compaction-kv-max"><code>hbase.hstore.compaction.kv.max</code></a></li>
-</ul></li>
-<li><a href="#hfile">HFile</a>
-<ul>
-<li><a href="#hfile-block-cache-size"><code>hfile.block.cache.size</code></a></li>
-<li><a href="#hfile-index-block-max-size">hfile.index.block.max.size</a></li>
-</ul></li>
-<li><a href="#client">Client</a>
-<ul>
-<li><a href="#hbase-client-write-buffer"><code>hbase.client.write.buffer</code></a></li>
-<li><a href="#hbase-client-pause"><code>hbase.client.pause</code></a></li>
-<li><a href="#hbase-client-retries-number"><code>hbase.client.retries.number</code></a></li>
-<li><a href="#hbase-client-max-total-tasks"><code>hbase.client.max.total.tasks</code></a></li>
-<li><a href="#hbase-client-keyvalue-maxsize">hbase.client.keyvalue.maxsize</a></li>
-<li><a href="#hbase-client-scanner-max-result-size"><code>hbase.client.scanner.max.result.size</code></a></li>
-<li><a href="#hbase-client-scanner-caching"><code>hbase.client.scanner.caching</code></a></li>
-<li><a href="#hbase-client-scanner-timeout-period"><code>hbase.client.scanner.timeout.period</code></a></li>
-<li><a href="#hbase-client-max-perserver-tasks">hbase.client.max.perserver.tasks</a></li>
-<li><a href="#hbase-client-max-perregion-tasks">hbase.client.max.perregion.tasks</a></li>
-</ul></li>
-<li><a href="#miscellaneous">Miscellaneous</a>
-<ul>
-<li><a href="#hbase-balancer-period">hbase.balancer.period</a></li>
-</ul></li>
-<li><a href="#read-more">Read More</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#core--install">Core / Install</a>
+      <ul>
+        <li><a href="#hbasetmpdir">hbase.tmp.dir</a></li>
+        <li><a href="#hbaserootdir"><code>hbase.rootdir</code></a></li>
+        <li><a href="#hbasefstmpdir">hbase.fs.tmp.dir</a></li>
+        <li><a href="#hbasebulkloadstagingdir">hbase.bulkload.staging.dir</a></li>
+        <li><a href="#hbaseclusterdistributed"><code>hbase.cluster.distributed</code></a></li>
+        <li><a href="#hbasezookeeperquorum"><code>hbase.zookeeper.quorum</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#master">Master</a>
+      <ul>
+        <li><a href="#hbasemasterport"><code>hbase.master.port</code></a></li>
+        <li><a href="#hbasemasterinfoport"><code>hbase.master.info.port</code></a></li>
+        <li><a href="#hbasemasterlogcleanerplugins">hbase.master.logcleaner.plugins</a></li>
+        <li><a href="#hbasemasterlogcleanerttl">hbase.master.logcleaner.ttl</a></li>
+        <li><a href="#hbasemasterhfilecleanerplugins">hbase.master.hfilecleaner.plugins</a></li>
+        <li><a href="#hbasemastercatalogtimeout">hbase.master.catalog.timeout</a></li>
+        <li><a href="#hbasemasterinfoserverredirect">hbase.master.infoserver.redirect</a></li>
+      </ul>
+    </li>
+    <li><a href="#regionserver">RegionServer</a>
+      <ul>
+        <li><a href="#hbaseregionserverport"><code>hbase.regionserver.port</code></a></li>
+        <li><a href="#hbaseregionserverinfoport"><code>hbase.regionserver.info.port</code></a></li>
+        <li><a href="#hbaseipcservercallqueuehandlerfactor">hbase.ipc.server.callqueue.handler.factor</a></li>
+        <li><a href="#hbaseipcservercallqueuereadratio">hbase.ipc.server.callqueue.read.ratio</a></li>
+        <li><a href="#hbaseipcservercallqueuescanratio">hbase.ipc.server.callqueue.scan.ratio</a></li>
+        <li><a href="#hbaseregionservermsginterval">hbase.regionserver.msginterval</a></li>
+        <li><a href="#hbaseregionserverlogrollperiod"><code>hbase.regionserver.logroll.period</code></a></li>
+        <li><a href="#hbaseregionserveroptionalcacheflushinterval">hbase.regionserver.optionalcacheflushinterval</a></li>
+        <li><a href="#hbaseregionserverregionsplitpolicy"><code>hbase.regionserver.region.split.policy</code></a></li>
+        <li><a href="#hbaseregionserverregionsplitlimit"><code>hbase.regionserver.regionSplitLimit</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#hregion">HRegion</a>
+      <ul>
+        <li><a href="#hbasehregionmemstoreflushsize"><code>hbase.hregion.memstore.flush.size</code></a></li>
+        <li><a href="#hbasehregionmaxfilesize"><code>hbase.hregion.max.filesize</code></a></li>
+        <li><a href="#hbasehregionpercolumnfamilyflushsizelowerbound">hbase.hregion.percolumnfamilyflush.size.lower.bound</a></li>
+        <li><a href="#hbasehregionprecloseflushsize">hbase.hregion.preclose.flush.size</a></li>
+        <li><a href="#hbasehregionmajorcompaction"><code>hbase.hregion.majorcompaction</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#hstore">HStore</a>
+      <ul>
+        <li><a href="#hbasehstoreblockingstorefiles"><code>hbase.hstore.blockingStoreFiles</code></a></li>
+        <li><a href="#hbasehstoreblockingwaittime"><code>hbase.hstore.blockingWaitTime</code></a></li>
+        <li><a href="#hbasehstorecompactionmax"><code>hbase.hstore.compaction.max</code></a></li>
+        <li><a href="#hbasehstorecompactionkvmax"><code>hbase.hstore.compaction.kv.max</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#hfile">HFile</a>
+      <ul>
+        <li><a href="#hfileblockcachesize"><code>hfile.block.cache.size</code></a></li>
+        <li><a href="#hfileindexblockmaxsize">hfile.index.block.max.size</a></li>
+      </ul>
+    </li>
+    <li><a href="#client">Client</a>
+      <ul>
+        <li><a href="#hbaseclientwritebuffer"><code>hbase.client.write.buffer</code></a></li>
+        <li><a href="#hbaseclientpause"><code>hbase.client.pause</code></a></li>
+        <li><a href="#hbaseclientretriesnumber"><code>hbase.client.retries.number</code></a></li>
+        <li><a href="#hbaseclientmaxtotaltasks"><code>hbase.client.max.total.tasks</code></a></li>
+        <li><a href="#hbaseclientkeyvaluemaxsize">hbase.client.keyvalue.maxsize</a></li>
+        <li><a href="#hbaseclientscannermaxresultsize"><code>hbase.client.scanner.max.result.size</code></a></li>
+        <li><a href="#hbaseclientscannercaching"><code>hbase.client.scanner.caching</code></a></li>
+        <li><a href="#hbaseclientscannertimeoutperiod"><code>hbase.client.scanner.timeout.period</code></a></li>
+        <li><a href="#hbaseclientmaxperservertasks">hbase.client.max.perserver.tasks</a></li>
+        <li><a href="#hbaseclientmaxperregiontasks">hbase.client.max.perregion.tasks</a></li>
+      </ul>
+    </li>
+    <li><a href="#miscellaneous">Miscellaneous</a>
+      <ul>
+        <li><a href="#hbasebalancerperiod">hbase.balancer.period</a></li>
+      </ul>
+    </li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
 </nav>
   </aside>
 

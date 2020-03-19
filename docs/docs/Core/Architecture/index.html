@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2f Architecture\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
+<li><strong>Cli</strong>
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
+</ul>
+</li>
+<li><strong>Core</strong>
+<ul>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
+<li><strong>Action</strong>
+<ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Architecture</strong>
+</header>
+
+      
+<article class="markdown"><h1 id="架构简介">架构简介</h1>
+<h2 id="master">Master</h2>
+<p>Master 可以有多个实现热备，通过 Zookeeper 选举一个为主，其他为备做 Failover。</p>
+<p>主要作用有：</p>
+<ul>
+<li>管理 RegionServer 和 其负载均衡</li>
+<li>管理和分配 Region
+<ul>
+<li>Region Split 时分配新的 Region</li>
+<li>RegionServer 退出时迁移其 Region 到其他 RegionServer</li>
+</ul>
+</li>
+<li>DDL操作，Namespace 、Table、Family 的增删改</li>
+<li>Namespace 、Table、Family 元数据管理</li>
+<li>ACL 权限控制</li>
+</ul>
+<h2 id="regionserver">RegionServer</h2>
+<ul>
+<li>
+<p>管理 Region</p>
+</li>
+<li>
+<p>读写 FS，管理 Table 中的数据</p>
+</li>
+<li>
+<p>Client 直连 RegionServer 读写数据，从 Master 中获取元数据，找到 RowKey 所在的 RegionServer</p>
+</li>
+<li>
+<p>RegionServer 一般和 HDFS DataNode 在同一台机器上运行，实现数据的本地性</p>
+</li>
+</ul>
+<h2 id="region">Region</h2>
+<ul>
+<li>RowKey 是有序的，HBase 根据 RowKey 来划分和查找 Region</li>
+</ul>
+<h2 id="hlog--wal">HLog / WAL</h2>
+<ul>
+<li>WAL(Write Ahead Log) 在早期版本中称为 HLog</li>
+<li>默认写操作会先保证将数据写入这个 Log 文件，才会真正更新 MemStore</li>
+<li>Client 可以通过 <code>put.setDurability</code> 设置写入方式，以下几种方式 安全性依次递增，性能依次下降
+<ul>
+<li><code>SKIP_WAL</code>：不写 WAL，直接写 MemStore</li>
+<li><code>ASYNC_WAL</code>：异步写 WAL，同时写 MemStore</li>
+<li><code>SYNC_WAL</code>（<code>USE_DEFAULT</code>）： 默认方式，写完 WAL，然后写 MemStore</li>
+<li><code>FSYNC_WAL</code>：<code>SYNC_WAL</code> + flush HFile</li>
+</ul>
+</li>
+<li>之前 RegionServer 只有一个 WAL 实例，也就是说一个 RegionServer 的所有 WAL 写都是串行的</li>
+<li>在 HBase 1.0 之后，实现了多个 WAL 并行写，以单个 Region 为单位</li>
+</ul>
+<h2 id="store">Store</h2>
+<ul>
+<li>列族 与 Store 一一对应</li>
+<li>一个表中有多个列族，则会有多个 Store</li>
+<li></li>
+</ul>
+<h2 id="memstore">MemStore</h2>
+<h2 id="storefile--hfile">StoreFile / HFile</h2>
+<p><a href="https://blog.csdn.net/u010916338/article/details/80774554">https://blog.csdn.net/u010916338/article/details/80774554</a></p>
+<h2 id="相关配置">相关配置</h2>
+<ul>
+<li></li>
+</ul>
+<h2 id="read-more">Read More</h2>
+<ul>
+<li>Apache HBase ™ Reference Guide
+<ul>
+<li><a href="http://hbase.apache.org/book.html#_architecture">Architecture</a></li>
+</ul>
+</li>
+<li><a href="http://www.blogjava.net/DLevin/archive/2015/08/22/426877.html">深入HBase架构解析(一) </a></li>
+<li><a href="http://www.blogjava.net/DLevin/archive/2015/08/22/426950.html">深入HBase架构解析(二) </a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-between">
+  
+  <div>
+    
+    <a href="https://github.com/hello-world-example/HBase/commit/531f2551a97a4b1283d978227438edc81069e13f" title='Last modified Mar 16, 2020 by 杨凯彬' target="_blank" rel="noopener">
+      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Mar 16, 2020
+    </a>
+  </div>
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/Architecture.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#master">Master</a></li>
+    <li><a href="#regionserver">RegionServer</a></li>
+    <li><a href="#region">Region</a></li>
+    <li><a href="#hlog--wal">HLog / WAL</a></li>
+    <li><a href="#store">Store</a></li>
+    <li><a href="#memstore">MemStore</a></li>
+    <li><a href="#storefile--hfile">StoreFile / HFile</a></li>
+    <li><a href="#相关配置">相关配置</a></li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

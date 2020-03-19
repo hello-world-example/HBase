@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delete a P I | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Action\2f Delete-API\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
+<li><strong>Cli</strong>
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
+</ul>
+</li>
+<li><strong>Core</strong>
+<ul>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
+<li><strong>Action</strong>
+<ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Delete a P I</strong>
+</header>
+
+      
+<article class="markdown"><h1 id="delete-操作语义">Delete 操作语义</h1>
+<p>单独把 <code>Delete</code> 拎出来，是因为 <code>Delete</code> 的 <strong>实际效果</strong> 与 <strong>语义</strong> 可能不符，比如常会出现</p>
+<ul>
+<li>本来想删除一个版本的数据，结果删除了一批</li>
+<li>删除之后重新写入，虽然操作成功，但是读取不到数据</li>
+<li>API 比较类似，很容易搞混，想象中与实际操作区别很大</li>
+<li>&hellip;</li>
+</ul>
+<h2 id="简介">简介</h2>
+<p>HBase 支持多版本，即支持向同一个 <code>rowkey:family:qualifier</code> 中写入多个 <code>timestamp</code> 不同的 <code>value</code>。<code>timestamp</code> 不仅可以由服务器根据写入时间生成，也可以由用户指定。尤其是在由用户指定的时候需要更加注意，因为常常会出现<strong>后写入数据的 <code>timestamp</code> 比之前写入的数据的  <code>timestamp</code>  还小的情况</strong>，即写入一个很久之前数据的情况。</p>
+<p>因为存储采用 <code>LSM (Log-Structured Merge Tree)</code> 结构， HBase 的删除操作并<strong>不会立即将数据从磁盘上删除</strong>，当执行删除操作时，会新插入一条相同的 KeyValue 数据，但是使 <code>keytype=Delete</code>，这便意味着数据被删除了，直到发生 <code>major_compact</code> 操作时，数据才会被真正的从磁盘上删除，删除标记也会从 <code>StoreFile</code> 删除。</p>
+<h2 id="hbase-shell">hbase shell</h2>
+<h3 id="数据准备">数据准备</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 创建一个表，最多可以有 5个 版本</span>
+&gt; create <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;f&#39;</span>, VERSIONS <span style="color:#f92672">=</span>&gt; 5<span style="color:#f92672">}</span>
+
+<span style="color:#75715e"># 插入三条数据，版本分别是 1/2/3</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;1&#39;</span>, <span style="color:#ae81ff">1</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;2&#39;</span>, <span style="color:#ae81ff">2</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+
+<span style="color:#75715e"># 查看数据</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                 
+
+<span style="color:#75715e"># 查看所有版本</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>        
+</code></pre></div><h3 id="delete">delete</h3>
+<ul>
+<li><code>delete '表名', '行键', '列'</code></li>
+<li><code>delete '表名', '行键', '列', 时间戳</code></li>
+</ul>
+<h4 id="删除列的最新版本">删除列（的最新版本）</h4>
+<blockquote>
+<p><code>delete '表名', '行键', '列'</code></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 删除 r1 的 c1 的 ❤❤❤ 最新版本的数据 ❤❤❤</span> 
+&gt; delete <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>
+
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                    
+ 
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>                     
+
+<span style="color:#75715e"># 查看删除标示</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, type<span style="color:#f92672">=</span>Delete                                                                                                      
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>  
+ 
+<span style="color:#75715e"># ================================================================================</span>
+ 
+<span style="color:#75715e"># ❤❤❤ put 之后仍然”查不到“ ❤❤❤</span> 
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+ 
+<span style="color:#75715e"># ================================================================================</span>
+
+<span style="color:#75715e"># ❤❤❤ major_compact 之后还是查不到 ❤❤❤</span> 
+<span style="color:#75715e"># ❤❤❤ major_compact 只是合并合并 HFile 文件 ❤❤❤</span> 
+<span style="color:#75715e"># ❤❤❤ 但是现在数据还在 MemeStore 中，需要先 flush 生成 HFile，再 major_compact  ❤❤❤</span> 
+&gt; major_compact <span style="color:#e6db74">&#39;test&#39;</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, type<span style="color:#f92672">=</span>Delete                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+ 
+<span style="color:#75715e"># ================================================================================</span>
+
+&gt; flush <span style="color:#e6db74">&#39;test&#39;</span>
+<span style="color:#75715e"># ❤❤❤ flush 之后 被标记数据已经删除，但是删除标记还在</span>
+<span style="color:#75715e"># ❤❤❤ 这个时候 put 数据还是看不到的 ❤❤❤</span> 
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, type<span style="color:#f92672">=</span>Delete  
+<span style="color:#75715e"># flush 之后 put 再 flush，这时候会发现这条还能查到，因为每次 flush 会生成一个新的 HFile</span>
+<span style="color:#75715e"># 新插入的数据 和 上次 flush 到 HFile 中的 删除标记，不在一个 HFile 里面</span>
+<span style="color:#75715e"># 如果 删除标记和被删除的数据同时刷到一个 HFile 中，则 scan RAW 的时候就是看不到的</span>
+<span style="color:#75715e">#r1    column=f:c1, timestamp=3, value=3</span>
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+
+&gt; major_compact <span style="color:#e6db74">&#39;test&#39;</span>
+<span style="color:#75715e"># 删除标记没有了</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+ 
+<span style="color:#75715e"># 此时再 Put 就可以看到了，回到最初的状态</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+</code></pre></div><h4 id="删除指定的版本">删除指定的版本</h4>
+<blockquote>
+<p><code>delete '表名', '行键', '列', 时间戳</code></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt; delete <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#ae81ff">2</span>
+
+<span style="color:#75715e"># 查不到 版本 2</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                           
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                           
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+
+<span style="color:#75715e"># Delete 删除标记</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, type<span style="color:#f92672">=</span>Delete                                                                                                      
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+ 
+ <span style="color:#75715e"># 后续操作与删除列效果一致，不再赘述</span>
+</code></pre></div><h3 id="deleteall">deleteall</h3>
+<ul>
+<li><code>deleteall '表名', '行键'</code></li>
+<li><code>deleteall '表名', '行键', '列'</code></li>
+<li><code>deleteall '表名', '行键', '列', 时间戳</code></li>
+</ul>
+<h4 id="删除行">删除行</h4>
+<blockquote>
+<p><code>deleteall '表名', '行键'</code></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 删除一行</span>
+&gt; deleteall <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>
+
+<span style="color:#75715e"># 查不到数据</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>                                         
+<span style="color:#ae81ff">0</span> row<span style="color:#f92672">(</span>s<span style="color:#f92672">)</span>
+
+<span style="color:#75715e"># ❤❤❤ 注意删除标记 ❤❤❤</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL  
+ r1    column<span style="color:#f92672">=</span>f:, timestamp<span style="color:#f92672">=</span>1584620555935, type<span style="color:#f92672">=</span>DeleteFamily  
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+
+<span style="color:#75715e"># ================================================================================</span>
+
+<span style="color:#75715e"># ❤❤❤ 对 r1 的 所有小于 timestamp=1584620555935 的新的插入操作，都是不可见的</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c2&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+
+<span style="color:#75715e"># ❤❤❤ 大于 timestamp=158462055593 的数据可见</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;1584620555935+1&#39;</span>, <span style="color:#ae81ff">1584620555936</span>
+
+<span style="color:#75715e"># ================================================================================</span>
+
+<span style="color:#75715e"># 多次删除操作总是排在前面</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:, timestamp<span style="color:#f92672">=</span>1584622644980, type<span style="color:#f92672">=</span>DeleteFamily                                                                                      
+ r1    column<span style="color:#f92672">=</span>f:, timestamp<span style="color:#f92672">=</span>1584620555935, type<span style="color:#f92672">=</span>DeleteFamily                                                                                      
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1584620555936, value<span style="color:#f92672">=</span>1584620555935+1                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>   
+</code></pre></div><h4 id="删除列">删除列</h4>
+<blockquote>
+<p><code>deleteall '表名', '行键', '列'</code></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">deleteall <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>
+
+<span style="color:#75715e"># ❤❤❤ 注意删除标记 ❤❤❤</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; 5, RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1584623119728, type<span style="color:#f92672">=</span>DeleteColumn                                                                                    
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>  
+ 
+<span style="color:#75715e"># ================================================================================</span>
+<span style="color:#75715e"># ❤❤❤ 区别 ❤❤❤</span>
+<span style="color:#75715e"># × 不可见</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+<span style="color:#75715e"># √ 可见</span>
+&gt; put <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c2&#39;</span>, <span style="color:#e6db74">&#39;3&#39;</span>, <span style="color:#ae81ff">3</span>
+</code></pre></div><h4 id="删除时间戳">删除时间戳</h4>
+<blockquote>
+<p><code>deleteall '表名', '行键', '列', 时间戳</code></p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 删除版本 2 及其之前的数据</span>
+&gt; deleteall <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#e6db74">&#39;r1&#39;</span>, <span style="color:#e6db74">&#39;f:c1&#39;</span>, <span style="color:#ae81ff">2</span>
+
+<span style="color:#75715e"># 版本2及其之前的版本都不可见</span>
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> <span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                           
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+ 
+&gt; scan <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> VERSIONS <span style="color:#f92672">=</span>&gt; <span style="color:#ae81ff">5</span> ,RAW <span style="color:#f92672">=</span>&gt; true<span style="color:#f92672">}</span>
+ROW    COLUMN+CELL                                                                                                                                
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>3, value<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, type<span style="color:#f92672">=</span>DeleteColumn                                            
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>2, value<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>                                                                                                          
+ r1    column<span style="color:#f92672">=</span>f:c1, timestamp<span style="color:#f92672">=</span>1, value<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>     
+</code></pre></div><h3 id="delete--deleteall-小结">delete / deleteall 小结</h3>
+<blockquote>
+<ul>
+<li>
+<p>delete： 删除指定版本</p>
+<ul>
+<li>Delete</li>
+<li>DeleteFamilyVersion</li>
+</ul>
+</li>
+<li>
+<p>deleteall: 删除指定版本<strong>之前的所有范围数据</strong></p>
+<ul>
+<li>DeleteColumn</li>
+<li>DeleteFamily</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th align="center">操作</th>
+<th align="center">delete</th>
+<th align="center">deleteall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">仅限定行键</td>
+<td align="center"><del>不支持</del></td>
+<td align="center">当前时间之前的所有数据</td>
+</tr>
+<tr>
+<td align="center">行键 +  列族/限定符</td>
+<td align="center">最新时间的数据</td>
+<td align="center"><strong>指定列</strong> <strong>最新时间</strong> 之前的所有数据</td>
+</tr>
+<tr>
+<td align="center">行键 +  列族/限定符 + timestamp</td>
+<td align="center">指定时间的数据</td>
+<td align="center"><strong>指定列</strong> <strong>指定时间</strong> 之前的所有数据</td>
+</tr>
+</tbody>
+</table>
+<h2 id="client-api">Client API</h2>
+<h3 id="-对比-">❤ 对比 ❤</h3>
+<ul>
+<li><code>t</code>  TableName</li>
+<li><code>r</code>  RowKey</li>
+<li><code>f</code>  Family / ColumnFamily</li>
+<li><code>c</code>  Column / Qualifier</li>
+<li><code>ts</code> timestamp</li>
+<li><code>tp</code> org.apache.hadoop.hbase.KeyValue.Type</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>范围</th>
+<th align="center">tp</th>
+<th>Client API</th>
+<th>Shell</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>之前</td>
+<td align="center"><code>DeleteFamily</code></td>
+<td><code>new Delete(rk)</code></td>
+<td><code>deleteall 't','r'</code></td>
+</tr>
+<tr>
+<td>之前</td>
+<td align="center"><code>DeleteFamily</code></td>
+<td><code>addFamily(f)</code></td>
+<td><code>deleteall 't','r','f'</code></td>
+</tr>
+<tr>
+<td>之前</td>
+<td align="center"><code>DeleteFamily</code></td>
+<td><code>addFamily(f, ts)</code></td>
+<td><code>deleteall 't','r','f',ts</code></td>
+</tr>
+<tr>
+<td><strong>当前</strong></td>
+<td align="center"><strong><code>DeleteFamilyVersion</code></strong></td>
+<td><code>addFamilyVersion(f, ts)</code></td>
+<td>无</td>
+</tr>
+<tr>
+<td><strong>当前</strong></td>
+<td align="center"><strong><code>Delete</code></strong></td>
+<td><code>addColumn(f,c)</code></td>
+<td><code>delete 't','r','f:c'</code></td>
+</tr>
+<tr>
+<td>之前</td>
+<td align="center"><code>DeleteColumn</code></td>
+<td><code>addColumns(f,c)</code></td>
+<td><code>deleteall 't','r','f:c'</code></td>
+</tr>
+<tr>
+<td><strong>当前</strong></td>
+<td align="center"><strong><code>Delete</code></strong></td>
+<td><code>addColumn(f,c,ts)</code></td>
+<td><code>delete 't','r', 'f:c',ts</code></td>
+</tr>
+<tr>
+<td>之前</td>
+<td align="center"><code>DeleteColumn</code></td>
+<td><code>addColumns(f,c,ts)</code></td>
+<td><code>deleteall 't','r','f:c',ts</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="其他操作">其他操作</h3>
+<table>
+<thead>
+<tr>
+<th>Delete 实例接口</th>
+<th>描述</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>add(cell)</code></td>
+<td>通过 <code>KeyValue(r,f,c,ts,tp)</code> 自定义类型</td>
+<td></td>
+</tr>
+<tr>
+<td><code>setTimestamp(ts)</code></td>
+<td><code>addXxx</code> 接口的 ts 参数，默认取最新的数据版本</td>
+<td></td>
+</tr>
+<tr>
+<td><code>setTTL(ttl)</code></td>
+<td>抛出 <code>UnsupportedOperationException</code> 异常</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="小结">小结</h2>
+<ul>
+<li>在表结构设计的开始阶段就要考虑 Delete 操作带来的问题</li>
+<li>如果写入数据不可见，可在 scan 时启用 RAW 来查看删除标示 <code>scan 't',{ .. ,RAW =&gt; true}</code></li>
+<li><code>flush</code> 和 <code>compact</code> 对 HBase 的性能影响很大，设计到大量的 IO 操作，一般由 HBase 自己控制，慎用</li>
+<li><code>major_compact</code> 并不一定能消除删除标记，因为标记可能还没有生成 HFile，需要先 <code>flush</code> <code>MemStore</code></li>
+</ul>
+<h2 id="read-more">Read More</h2>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/HkkdTzBdKOJSc2odLaJlww">HBase多版本语义与delete语义的历史遗留问题</a></li>
+<li><a href="https://blog.csdn.net/cenjianteng/article/details/96645447">HBase删除数据的原理</a></li>
+<li>JavaDoc: <a href="https://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Delete.html">org.apache.hadoop.hbase.client.Delete</a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-end">
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Action/Delete-API.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#hbase-shell">hbase shell</a>
+      <ul>
+        <li><a href="#数据准备">数据准备</a></li>
+        <li><a href="#delete">delete</a></li>
+        <li><a href="#deleteall">deleteall</a></li>
+        <li><a href="#delete--deleteall-小结">delete / deleteall 小结</a></li>
+      </ul>
+    </li>
+    <li><a href="#client-api">Client API</a>
+      <ul>
+        <li><a href="#-对比-">❤ 对比 ❤</a></li>
+        <li><a href="#其他操作">其他操作</a></li>
+      </ul>
+    </li>
+    <li><a href="#小结">小结</a></li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

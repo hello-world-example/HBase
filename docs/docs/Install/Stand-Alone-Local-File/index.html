@@ -7,7 +7,7 @@
 <title>Stand Alone Local File | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,9 +116,7 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="单机本地文件系统">单机本地文件系统</h1>
+<article class="markdown"><h1 id="单机本地文件系统">单机本地文件系统</h1>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 下载</span>
 wget http://mirrors.hust.edu.cn/apache/hbase/stable/hbase-1.2.6-bin.tar.gz
 
@@ -152,25 +157,17 @@ vim hbase-1.2.6/conf/hbase-env.sh
 tail -fn <span style="color:#ae81ff">400</span> hbase-1.2.6/logs/hbase-kail-master-MacBook-Pro.local.out
 
 <span style="color:#75715e"># 进入 hbase shell</span>
-./hbase-1.2.6/bin/hbase shell</code></pre></div>
-<h2 id="webui">WebUI</h2>
-
-<p><a href="http://localhost:16010/master-status">http://localhost:16010/master-status</a></p>
-
+./hbase-1.2.6/bin/hbase shell
+</code></pre></div><h2 id="webui">WebUI</h2>
+<p>http://localhost:16010/master-status</p>
 <h2 id="faq">FAQ</h2>
-
-<h3 id="could-not-start-zk-at-requested-port-of-2181-zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</h3>
-
+<h3 id="could-not-start-zk-at-requested-port-of-2181--zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</h3>
 <p>新增以下配置，</p>
-
 <pre><code>&lt;property&gt;
     &lt;name&gt;hbase.cluster.distributed&lt;/name&gt;
     &lt;value&gt;true&lt;/value&gt;
 &lt;/property&gt;
-</code></pre>
-
-<h2 id="read-more">Read More</h2>
-
+</code></pre><h2 id="read-more">Read More</h2>
 <ul>
 <li><a href="http://hbase.apache.org/book.html#quickstart">Quick Start - Standalone HBase</a></li>
 <li><a href="http://abloz.com/hbase/book.html#quickstart">HBase 快速开始</a></li>
@@ -205,17 +202,15 @@ tail -fn <span style="color:#ae81ff">400</span> hbase-1.2.6/logs/hbase-kail-mast
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#单机本地文件系统">单机本地文件系统</a>
-<ul>
-<li><a href="#webui">WebUI</a></li>
-<li><a href="#faq">FAQ</a>
-<ul>
-<li><a href="#could-not-start-zk-at-requested-port-of-2181-zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</a></li>
-</ul></li>
-<li><a href="#read-more">Read More</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#webui">WebUI</a></li>
+    <li><a href="#faq">FAQ</a>
+      <ul>
+        <li><a href="#could-not-start-zk-at-requested-port-of-2181--zk-was-started-at-port-2182">Could not start ZK at requested port of 2181.  ZK was started at port: 2182.</a></li>
+      </ul>
+    </li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
 </nav>
   </aside>
 

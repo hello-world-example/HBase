@@ -7,7 +7,7 @@
 <title>Filter | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,44 +116,37 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="hbase-内置过滤器简介">HBase 内置过滤器简介</h1>
-
+<article class="markdown"><h1 id="hbase-内置过滤器简介">HBase 内置过滤器简介</h1>
 <p>HBase 的过滤器可以让我们<strong>在查询中添加更多的限制条件 来减少查询得到的数据量</strong>，从而帮助用户<strong>提高处理表数据的效率</strong>。
 所有的<strong>过滤器都在服务端生效</strong>，使被过滤掉的数据不会被传送到客户端。</p>
-
 <h2 id="filter-的继承结构">Filter 的继承结构</h2>
-
 <ul>
 <li>Filter
-
 <ul>
 <li>FilterBase
-
 <ul>
 <li><code>CompareFilter</code>
-
 <ul>
 <li><code>RowFilter</code></li>
 <li><code>FamilyFilter</code></li>
 <li><code>QualifierFilter</code></li>
 <li><code>ValueFilter</code></li>
 <li>DependentColumnFilter</li>
-</ul></li>
+</ul>
+</li>
 <li><code>SingleColumnValueFilter</code>
-
 <ul>
 <li>SingleColumnValueExcludeFilter</li>
-</ul></li>
+</ul>
+</li>
 <li><code>PrefixFilter</code></li>
 <li><code>PageFilter</code> (*.fiter)</li>
 <li>KeyOnlyFilter</li>
 <li>FirstKeyOnlyFilter
-
 <ul>
 <li>FirstKeyValueMatchingQualifiersFilter</li>
-</ul></li>
+</ul>
+</li>
 <li>InclusiveStopFilter</li>
 <li><code>TimestampsFilter</code></li>
 <li>ColumnCountGetFilter</li>
@@ -159,200 +159,146 @@ https://github.com/alex-shpak/hugo-book
 <li><code>FuzzyRowFilter</code></li>
 <li>SkipFilter</li>
 <li>WhileMatchFilter</li>
-</ul></li>
+</ul>
+</li>
 <li><code>FilterList</code></li>
 <li>FilterWrapper</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <h2 id="comparefilter">CompareFilter</h2>
-
 <p>CompareFilter <strong>返回匹配的行</strong>。</p>
-
 <p><strong>构造函数</strong>：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">CompareFilter</span>(<span style="color:#66d9ef">final</span> <span style="color:#a6e22e">CompareOp</span> compareOp, <span style="color:#66d9ef">final</span> <span style="color:#a6e22e">ByteArrayComparable</span> comparator) {
-    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">compareOp</span> <span style="color:#f92672">=</span> compareOp;
-    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">comparator</span> <span style="color:#f92672">=</span> comparator;
-}</code></pre></div>
-<p><strong>比较运算符</strong>：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">enum</span> CompareOp {
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">CompareFilter</span><span style="color:#f92672">(</span><span style="color:#66d9ef">final</span> CompareOp compareOp<span style="color:#f92672">,</span> <span style="color:#66d9ef">final</span> ByteArrayComparable comparator<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">compareOp</span> <span style="color:#f92672">=</span> compareOp<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">comparator</span> <span style="color:#f92672">=</span> comparator<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p><strong>比较运算符</strong>：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> CompareOp <span style="color:#f92672">{</span>
     <span style="color:#75715e">/** 小于 */</span>
-    LESS,
+    LESS<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 小于等于 */</span>
-    LESS_OR_EQUAL,
+    LESS_OR_EQUAL<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 等于 */</span>
-    EQUAL,
+    EQUAL<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 不等于 */</span>
-    NOT_EQUAL,
+    NOT_EQUAL<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 大于等于 */</span>
-    GREATER_OR_EQUAL,
+    GREATER_OR_EQUAL<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 大于 */</span>
-    GREATER,
+    GREATER<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 不操作 */</span>
     NO_OP
-}</code></pre></div>
-<p><strong>比较器</strong>：</p>
-
+<span style="color:#f92672">}</span>
+</code></pre></div><p><strong>比较器</strong>：</p>
 <ul>
 <li><strong>BinaryComparator</strong>    使用<code>Bytes.compareTo()</code>进行比较</li>
 <li><strong>BinaryPrefixComparator</strong>    使用 <code>Bytes.compareTo()</code> 进行前缀匹配</li>
 <li>NullComparator    不做匹配，只判断当前值是否为 null</li>
 <li>LongComparator    <code>longValue.compareTo(Bytes.toLong(value))</code></li>
 </ul>
-
 <p>一下三种只能 使用 <code>EQUAL</code> 和 <code>NOT_EQUAL</code> 运算符</p>
-
 <ul>
 <li>BitComparator    使用 异或非 进行比较</li>
 <li><strong>RegexStringComparator</strong>    正则匹配</li>
 <li><strong>SubstringComparator</strong>    子串匹配</li>
 </ul>
-
 <h3 id="rowfilter">RowFilter</h3>
-
 <p>筛选出 匹配的行键</p>
-
 <h3 id="familyfilter">FamilyFilter</h3>
-
 <p>筛选出 匹配的列族</p>
-
 <h3 id="qualifierfilter">QualifierFilter</h3>
-
 <p>筛选出 匹配的列限定符</p>
-
 <h3 id="valuefilter">ValueFilter</h3>
-
 <p>筛选出 匹配的值</p>
-
 <h3 id="dependentcolumnfilter">DependentColumnFilter</h3>
-
 <blockquote>
 <p>指定一个参考列来过滤其他列的过滤器，过滤的原则是<strong>基于参考列的时间戳来进行筛选</strong>。</p>
-
+</blockquote>
+<blockquote>
 <p><a href="https://www.cnblogs.com/MOBIN/p/5005871.html">HBase&ndash;DependentColumnFilter（参考列过滤器 ）详解</a></p>
 </blockquote>
-
 <h2 id="专用过滤器">专用过滤器</h2>
-
 <h3 id="singlecolumnvaluefilter">SingleColumnValueFilter</h3>
-
 <p>与 <code>ValueFilter</code> 类似，但是可以<strong>值针对某个列限定符</strong>里面的值进行过滤。</p>
-
 <h4 id="singlecolumnvalueexcludefilter">SingleColumnValueExcludeFilter</h4>
-
 <p>与<code>SingleColumnValueFilter</code> 的不同之处在于，<strong>不返回指定的列限定符 所有的列</strong></p>
-
 <h3 id="prefixfilter">PrefixFilter</h3>
-
 <p>匹配到的行键前缀的行会被返回。<strong>当遇到比前缀大的行时，扫描结束</strong></p>
-
 <h3 id="pagefilter">PageFilter</h3>
-
 <p>从起始行键扫描，返回指定的条数。
 翻页的时候客户端需要记录上次返回的会有一个行键，下次作为起始行键。
 起始行键是包含在返回结果中的，如果不想包含起始行键，在行键后拼接一个0字节的数组。</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">scan.<span style="color:#a6e22e">setStopRow</span>(Bytes.<span style="color:#a6e22e">padTail</span>(someBytes, 0));
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">scan<span style="color:#f92672">.</span><span style="color:#a6e22e">setStopRow</span><span style="color:#f92672">(</span>Bytes<span style="color:#f92672">.</span><span style="color:#a6e22e">padTail</span><span style="color:#f92672">(</span>someBytes<span style="color:#f92672">,</span> 0<span style="color:#f92672">));</span>
 <span style="color:#75715e">// 或
-</span><span style="color:#75715e"></span>scan.<span style="color:#a6e22e">setStopRow</span>(Bytes.<span style="color:#a6e22e">add</span>(someBytes, <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span>[0]));</code></pre></div>
-<h3 id="keyonlyfilter">KeyOnlyFilter</h3>
-
+</span><span style="color:#75715e"></span>scan<span style="color:#f92672">.</span><span style="color:#a6e22e">setStopRow</span><span style="color:#f92672">(</span>Bytes<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>someBytes<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[</span>0<span style="color:#f92672">]));</span>
+</code></pre></div><h3 id="keyonlyfilter">KeyOnlyFilter</h3>
 <p>这个过滤器的功能就是<strong>只返回每行的行键，值全部为空</strong>，这对于只关注于行键的应用场景来说非常合适，这样忽略掉其值就可以减少传递到客户端的数据量，能起到一定的优化作用；</p>
-
 <h3 id="firstkeyonlyfilter">FirstKeyOnlyFilter</h3>
-
 <p>只返回第一个列限定符所在的列</p>
-
 <h4 id="firstkeyvaluematchingqualifiersfilter">FirstKeyValueMatchingQualifiersFilter</h4>
-
 <p>通过设置一组需要匹配的列，只要匹配到任意一个列就会停止这一行的扫描操作进行下一行的扫描。</p>
-
 <h3 id="inclusivestopfilter">InclusiveStopFilter</h3>
-
 <p>scan 的时候开始行被包含在内，但是结束行被排除在外，<strong>使用该过滤器，会返回结束行</strong>。</p>
-
 <h3 id="timestampsfilter">TimestampsFilter</h3>
-
 <p>获取指定的时间戳集合
 <code>scan.setTimeRange()</code> 可以指定时间戳范围</p>
-
 <h3 id="columncountgetfilter">ColumnCountGetFilter</h3>
-
 <p>限制 Get 操作返回的列数。
 如果某一个行的列数超过限定的值，会停止扫描，所以<strong>不适合 scan 使用</strong></p>
-
 <h3 id="columnpaginationfilter">ColumnPaginationFilter</h3>
-
 <p><code>PageFilter</code> 是基于行分页，该过滤器是基于列分页</p>
-
 <h3 id="columnprefixfilter">ColumnPrefixFilter</h3>
-
 <p>与<code>PrefixFilter</code>类似，该过滤器可以前缀匹配 列限定符</p>
-
 <h3 id="randomrowfilter">RandomRowFilter</h3>
-
 <p>根据设定的概率随机选择返回的行。
 过滤器内部调用 Java 的随机方法产生一个随机数，如果产生的随机数小于设定的概率则包含改行，否则排除。
 如果设定概率小于0，则全部排除，如果设置概率大于1，则全部包含</p>
-
 <h3 id="columnrangefilter">ColumnRangeFilter</h3>
-
 <p>根据指定的列的范围进行筛选</p>
-
 <h3 id="multiplecolumnprefixfilter">MultipleColumnPrefixFilter</h3>
-
 <p>过个列前缀过滤，构造方法是一个前缀数组</p>
-
 <h3 id="multirowrangefilter">MultiRowRangeFilter</h3>
-
 <p>多个行键过滤，构造方法是一个范围列表</p>
-
 <h3 id="fuzzyrowfilter">FuzzyRowFilter</h3>
-
 <p><code>FuzzyRowFilter</code> 是对 <strong>行键模糊匹配</strong> 的优化版。是扫描更加快速。
 它需要 一对儿信息（行键，模糊信息）以匹配行键。
-模糊信息（fuzzy）是以<code>0</code>或<code>1</code>作为其值的字节数组：
-- <code>0</code> - 相同位置上的 RowKey 的字节必须匹配（<strong>不模糊匹配</strong>）
-- <code>1</code> - 这个位置上的 RowKey 的字节可以不同于提供的行密钥中的字节（<strong>模糊匹配</strong>）</p>
-
+模糊信息（fuzzy）是以<code>0</code>或<code>1</code>作为其值的字节数组：</p>
+<ul>
+<li><code>0</code> - 相同位置上的 RowKey 的字节必须匹配（<strong>不模糊匹配</strong>）</li>
+<li><code>1</code> - 这个位置上的 RowKey 的字节可以不同于提供的行密钥中的字节（<strong>模糊匹配</strong>）</li>
+</ul>
 <p>示例: 假设行键的格式是 <code>userId_actionId_year_month</code>.
 <code>userId</code>的长度是<code>4</code>, <code>actionId</code>的长度是<code>2</code> ，<code>year</code> 和 <code>month</code>的长度分别是<code>4</code>和<code>2</code>
 假设我们需要在<strong>任意一年</strong>的<strong>一月</strong>中获取执行<strong>特定操作</strong>（编码为<code>99</code>）的<strong>所有用户</strong>，我们可以这样。
 pair(row key, fuzzy info) 信息如下: row key = <code>????_99_????_01</code> (用<code>?</code>代替任何字符) ，fuzzy info = <code>new byte[]{1,1,1,1,   0,   0,0,   0,   1,1,1,1,   0,   0,0}</code></p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Pair<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">byte</span>[], <span style="color:#66d9ef">byte</span>[]<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">pair</span> <span style="color:#f92672">=</span> Pair.<span style="color:#a6e22e">newPair</span>(
-    Bytes.<span style="color:#a6e22e">toBytes</span>(<span style="color:#e6db74">&#34;????_99_????_01&#34;</span>), 
-    <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span>[]{1,1,1,1,   0,   0,0,   0,   1,1,1,1,   0,   0,0}
-);
-scan.<span style="color:#a6e22e">setFilter</span>(<span style="color:#66d9ef">new</span> FuzzyRowFilter(Arrays.<span style="color:#a6e22e">asList</span>(pair)));</code></pre></div>
-<blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Pair<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[],</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]&gt;</span> pair <span style="color:#f92672">=</span> Pair<span style="color:#f92672">.</span><span style="color:#a6e22e">newPair</span><span style="color:#f92672">(</span>
+    Bytes<span style="color:#f92672">.</span><span style="color:#a6e22e">toBytes</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;????_99_????_01&#34;</span><span style="color:#f92672">),</span> 
+    <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]{</span>1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>   0<span style="color:#f92672">,</span>   0<span style="color:#f92672">,</span>0<span style="color:#f92672">,</span>   0<span style="color:#f92672">,</span>   1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>1<span style="color:#f92672">,</span>   0<span style="color:#f92672">,</span>   0<span style="color:#f92672">,</span>0<span style="color:#f92672">}</span>
+<span style="color:#f92672">);</span>
+scan<span style="color:#f92672">.</span><span style="color:#a6e22e">setFilter</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> FuzzyRowFilter<span style="color:#f92672">(</span>Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">asList</span><span style="color:#f92672">(</span>pair<span style="color:#f92672">)));</span>
+</code></pre></div><blockquote>
 <p><a href="http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/filter/FuzzyRowFilter.html">FuzzyRowFilter</a></p>
 </blockquote>
-
 <h2 id="附加过滤器">附加过滤器</h2>
-
 <h3 id="skipfilter">SkipFilter</h3>
-
 <p>该过滤器用于包装其它过滤器，匹配的过滤器，被该过滤器包装后会跳过。相当于 <strong>不等于</strong></p>
-
 <h3 id="whilematchfilter">WhileMatchFilter</h3>
-
 <p>该过滤器用于包装其它过滤器，返回从匹配开始，第一次遇到不匹配的之前的匹配到的数据。</p>
-
 <h2 id="filterlist">FilterList</h2>
-
 <p>多个过滤器可以组合使用，组合情况有一下两种</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">static</span> <span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">Operator</span> {
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">enum</span> Operator <span style="color:#f92672">{</span>
 
     <span style="color:#75715e">/** 所有过滤器都必须满足 */</span>
-    MUST_PASS_ALL,
+    MUST_PASS_ALL<span style="color:#f92672">,</span>
     <span style="color:#75715e">/** 只用满足其中一个就行 */</span>
     MUST_PASS_ONE
-}</code></pre></div>
-<h3 id="只返回满足条件的行键信息">只返回满足条件的行键信息</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">FilterList <span style="color:#a6e22e">filterList</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterList(FilterList.<span style="color:#a6e22e">Operator</span>.<span style="color:#a6e22e">MUST_PASS_ALL</span>);
-filterList.<span style="color:#a6e22e">addFilter</span>(<span style="color:#66d9ef">new</span> PrefixFilter(Bytes.<span style="color:#a6e22e">toBytes</span>(<span style="color:#e6db74">&#34;dev&#34;</span>)));
-filterList.<span style="color:#a6e22e">addFilter</span>(<span style="color:#66d9ef">new</span> KeyOnlyFilter());</code></pre></div>
-<h2 id="read-more">Read More</h2>
-
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="只返回满足条件的行键信息">只返回满足条件的行键信息</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">FilterList filterList <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterList<span style="color:#f92672">(</span>FilterList<span style="color:#f92672">.</span><span style="color:#a6e22e">Operator</span><span style="color:#f92672">.</span><span style="color:#a6e22e">MUST_PASS_ALL</span><span style="color:#f92672">);</span>
+filterList<span style="color:#f92672">.</span><span style="color:#a6e22e">addFilter</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> PrefixFilter<span style="color:#f92672">(</span>Bytes<span style="color:#f92672">.</span><span style="color:#a6e22e">toBytes</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;dev&#34;</span><span style="color:#f92672">)));</span>
+filterList<span style="color:#f92672">.</span><span style="color:#a6e22e">addFilter</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> KeyOnlyFilter<span style="color:#f92672">());</span>
+</code></pre></div><h2 id="read-more">Read More</h2>
 <ul>
 <li><a href="http://hbase.apache.org/book.html#client.filter">68. Client Request Filters</a></li>
 <li><a href="http://blog.csdn.net/u014034934/article/details/74330848">Filters In Hbase Shell</a></li>
@@ -388,54 +334,49 @@ filterList.<span style="color:#a6e22e">addFilter</span>(<span style="color:#66d9
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#hbase-内置过滤器简介">HBase 内置过滤器简介</a>
-<ul>
-<li><a href="#filter-的继承结构">Filter 的继承结构</a></li>
-<li><a href="#comparefilter">CompareFilter</a>
-<ul>
-<li><a href="#rowfilter">RowFilter</a></li>
-<li><a href="#familyfilter">FamilyFilter</a></li>
-<li><a href="#qualifierfilter">QualifierFilter</a></li>
-<li><a href="#valuefilter">ValueFilter</a></li>
-<li><a href="#dependentcolumnfilter">DependentColumnFilter</a></li>
-</ul></li>
-<li><a href="#专用过滤器">专用过滤器</a>
-<ul>
-<li><a href="#singlecolumnvaluefilter">SingleColumnValueFilter</a>
-<ul>
-<li><a href="#singlecolumnvalueexcludefilter">SingleColumnValueExcludeFilter</a></li>
-</ul></li>
-<li><a href="#prefixfilter">PrefixFilter</a></li>
-<li><a href="#pagefilter">PageFilter</a></li>
-<li><a href="#keyonlyfilter">KeyOnlyFilter</a></li>
-<li><a href="#firstkeyonlyfilter">FirstKeyOnlyFilter</a>
-<ul>
-<li><a href="#firstkeyvaluematchingqualifiersfilter">FirstKeyValueMatchingQualifiersFilter</a></li>
-</ul></li>
-<li><a href="#inclusivestopfilter">InclusiveStopFilter</a></li>
-<li><a href="#timestampsfilter">TimestampsFilter</a></li>
-<li><a href="#columncountgetfilter">ColumnCountGetFilter</a></li>
-<li><a href="#columnpaginationfilter">ColumnPaginationFilter</a></li>
-<li><a href="#columnprefixfilter">ColumnPrefixFilter</a></li>
-<li><a href="#randomrowfilter">RandomRowFilter</a></li>
-<li><a href="#columnrangefilter">ColumnRangeFilter</a></li>
-<li><a href="#multiplecolumnprefixfilter">MultipleColumnPrefixFilter</a></li>
-<li><a href="#multirowrangefilter">MultiRowRangeFilter</a></li>
-<li><a href="#fuzzyrowfilter">FuzzyRowFilter</a></li>
-</ul></li>
-<li><a href="#附加过滤器">附加过滤器</a>
-<ul>
-<li><a href="#skipfilter">SkipFilter</a></li>
-<li><a href="#whilematchfilter">WhileMatchFilter</a></li>
-</ul></li>
-<li><a href="#filterlist">FilterList</a>
-<ul>
-<li><a href="#只返回满足条件的行键信息">只返回满足条件的行键信息</a></li>
-</ul></li>
-<li><a href="#read-more">Read More</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#filter-的继承结构">Filter 的继承结构</a></li>
+    <li><a href="#comparefilter">CompareFilter</a>
+      <ul>
+        <li><a href="#rowfilter">RowFilter</a></li>
+        <li><a href="#familyfilter">FamilyFilter</a></li>
+        <li><a href="#qualifierfilter">QualifierFilter</a></li>
+        <li><a href="#valuefilter">ValueFilter</a></li>
+        <li><a href="#dependentcolumnfilter">DependentColumnFilter</a></li>
+      </ul>
+    </li>
+    <li><a href="#专用过滤器">专用过滤器</a>
+      <ul>
+        <li><a href="#singlecolumnvaluefilter">SingleColumnValueFilter</a></li>
+        <li><a href="#prefixfilter">PrefixFilter</a></li>
+        <li><a href="#pagefilter">PageFilter</a></li>
+        <li><a href="#keyonlyfilter">KeyOnlyFilter</a></li>
+        <li><a href="#firstkeyonlyfilter">FirstKeyOnlyFilter</a></li>
+        <li><a href="#inclusivestopfilter">InclusiveStopFilter</a></li>
+        <li><a href="#timestampsfilter">TimestampsFilter</a></li>
+        <li><a href="#columncountgetfilter">ColumnCountGetFilter</a></li>
+        <li><a href="#columnpaginationfilter">ColumnPaginationFilter</a></li>
+        <li><a href="#columnprefixfilter">ColumnPrefixFilter</a></li>
+        <li><a href="#randomrowfilter">RandomRowFilter</a></li>
+        <li><a href="#columnrangefilter">ColumnRangeFilter</a></li>
+        <li><a href="#multiplecolumnprefixfilter">MultipleColumnPrefixFilter</a></li>
+        <li><a href="#multirowrangefilter">MultiRowRangeFilter</a></li>
+        <li><a href="#fuzzyrowfilter">FuzzyRowFilter</a></li>
+      </ul>
+    </li>
+    <li><a href="#附加过滤器">附加过滤器</a>
+      <ul>
+        <li><a href="#skipfilter">SkipFilter</a></li>
+        <li><a href="#whilematchfilter">WhileMatchFilter</a></li>
+      </ul>
+    </li>
+    <li><a href="#filterlist">FilterList</a>
+      <ul>
+        <li><a href="#只返回满足条件的行键信息">只返回满足条件的行键信息</a></li>
+      </ul>
+    </li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
 </nav>
   </aside>
 

@@ -7,7 +7,7 @@
 <title>Hfile Pretty Printer | HBase</title>
 
 
-<link rel="stylesheet" href="/HBase/book.min.d0f4d7815de7629bacde0354c9ee4200dd36a05a35659573bdc7fdda7bf05bb4.css">
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
 
 
 
@@ -51,32 +51,39 @@ https://github.com/alex-shpak/hugo-book
 
 <ul>
 <li><strong>Install</strong>
-
 <ul>
 <li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
 <li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
 <li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
 <li><strong>Cli</strong>
-
 <ul>
 <li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
-</ul></li>
+</ul>
+</li>
 <li><strong>Core</strong>
-
 <ul>
-<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">架构简介</a></li>
 <li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
 <li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
-<li><a href="/HBase/docs/Core/Filter/">FIlter</a></li>
-</ul></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
 <li><strong>Action</strong>
-
 <ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
 <li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
 <li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
-</ul></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
 </ul>
 
 
@@ -109,10 +116,7 @@ https://github.com/alex-shpak/hugo-book
 </header>
 
       
-<article class="markdown">
-
-<h1 id="通过-hfile-tool-查看-hfile文件内容">通过 “HFile Tool” 查看 HFile文件内容</h1>
-
+<article class="markdown"><h1 id="通过-hfile-tool-查看-hfile文件内容">通过 “HFile Tool” 查看 HFile文件内容</h1>
 <p>查看 HFile 内容的文本版本, 你可以使用<code>org.apache.hadoop.hbase.io.hfile.HFile</code>工具。输入以下命令查看使用帮助。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ hbase org.apache.hadoop.hbase.io.hfile.HFile
 
@@ -129,9 +133,8 @@ usage: HFile <span style="color:#f92672">[</span>-a<span style="color:#f92672">]
     -r,--region &lt;arg&gt;        Region to scan. Pass region name; e.g. <span style="color:#e6db74">&#39;hbase:meta,,1&#39;</span>
     -s,--stats               Print statistics
     -v,--verbose             Verbose output; emits file and meta data delimiters
-    -w,--seekToRow &lt;arg&gt;     Seek to this row and print all the kvs <span style="color:#66d9ef">for</span> this row only</code></pre></div>
-<!-- more -->
-
+    -w,--seekToRow &lt;arg&gt;     Seek to this row and print all the kvs <span style="color:#66d9ef">for</span> this row only
+</code></pre></div><!-- raw HTML omitted -->
 <h2 id="hfile-文件-在-hdfs-上的位置">HFile 文件 在 HDFS 上的位置</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">/hbase                                  # hbase.rootdir 配置的 HDFS 根路径
     /data                               # 保存表数据
@@ -139,34 +142,26 @@ usage: HFile <span style="color:#f92672">[</span>-a<span style="color:#f92672">]
             /&lt;Table&gt;                    # 表名
                 /&lt;Region&gt;               # 表分割的 region
                     /&lt;ColumnFamily&gt;     # 表的列族
-                        /&lt;StoreFile&gt;    # Region 下 表列族的 StoreFile（HFile）</code></pre></div>
-<p><code>-f</code> 参数的看起来像这样</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-f hdfs://s01.hbase.kail.xyz:8020/hbase/data/default/test_table/9983d7464bcf4488a0b89a51711048b5/f1/e28e891e61554099b680da55b6f8aadd</code></pre></div>
-<p><code>org.apache.hadoop.hbase.io.hfile.HFile</code> 内部实际上直接调用 <code>HFilePrettyPrinter</code> 的 <code>main</code>方法；
+                        /&lt;StoreFile&gt;    # Region 下 表列族的 StoreFile（HFile）
+</code></pre></div><p><code>-f</code> 参数的看起来像这样</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">-f hdfs://s01.hbase.kail.xyz:8020/hbase/data/default/test_table/9983d7464bcf4488a0b89a51711048b5/f1/e28e891e61554099b680da55b6f8aadd
+</code></pre></div><p><code>org.apache.hadoop.hbase.io.hfile.HFile</code> 内部实际上直接调用 <code>HFilePrettyPrinter</code> 的 <code>main</code>方法；
 通过 <code>FileSystem.get</code>方法，判断 <code>hdfs://</code> schema，从而返回具体的 <code>FileSystem</code> 实现，所以 HFile 不一定在 HDFS 上，本地文件也可以。</p>
-
 <h2 id="校验相关">校验相关</h2>
-
-<h3 id="k-checkrow">-k,&ndash;checkrow</h3>
-
+<h3 id="-k--checkrow">-k,&ndash;checkrow</h3>
 <p>HBase的数据是按照字典顺序存储的，该参数会 检查行顺序，查看是否有乱序的行。通过以下方式进行检查：</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> (CellComparator.<span style="color:#a6e22e">compareRows</span>(pCell, cell) <span style="color:#f92672">&gt;</span> 0) {
-    System.<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;WARNING, previous row is greater then current row\n\tfilename -&gt; &#34;</span> <span style="color:#f92672">+</span> file <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;\n\tprevious -&gt; &#34;</span>
-      <span style="color:#f92672">+</span> CellUtil.<span style="color:#a6e22e">getCellKeyAsString</span>(pCell) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;\n\tcurrent  -&gt; &#34;</span> <span style="color:#f92672">+</span> CellUtil.<span style="color:#a6e22e">getCellKeyAsString</span>(cell));
-}</code></pre></div>
-<h3 id="a-checkfamily">-a,&ndash;checkfamily</h3>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>CellComparator<span style="color:#f92672">.</span><span style="color:#a6e22e">compareRows</span><span style="color:#f92672">(</span>pCell<span style="color:#f92672">,</span> cell<span style="color:#f92672">)</span> <span style="color:#f92672">&gt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    System<span style="color:#f92672">.</span><span style="color:#a6e22e">err</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;WARNING, previous row is greater then current row\n\tfilename -&gt; &#34;</span> <span style="color:#f92672">+</span> file <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;\n\tprevious -&gt; &#34;</span>
+      <span style="color:#f92672">+</span> CellUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">getCellKeyAsString</span><span style="color:#f92672">(</span>pCell<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;\n\tcurrent  -&gt; &#34;</span> <span style="color:#f92672">+</span> CellUtil<span style="color:#f92672">.</span><span style="color:#a6e22e">getCellKeyAsString</span><span style="color:#f92672">(</span>cell<span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="-a--checkfamily">-a,&ndash;checkfamily</h3>
 <ol>
 <li>检查 cell列族名 与 <code>-f</code> 传入的 文件路径中的列族名是否一致</li>
 <li>与 <code>-k</code> 一样，检查 列族是否有乱序的情况</li>
 </ol>
-
 <h2 id="打印">打印</h2>
-
-<h3 id="m-printmeta">-m,&ndash;printmeta</h3>
-
+<h3 id="-m--printmeta">-m,&ndash;printmeta</h3>
 <p>打印元数据信息，包括：起始键、结束键、中间键、平均Key长，数据量、数据大小 等等</p>
-
 <pre><code>Block index size as per heapsize: 57040
 reader=hdfs://s01.hbase.kail.xyz:8020/hbase/data/default/test_table/9983d7464bcf4488a0b89a51711048b5/f1/e28e891e61554099b680da55b6f8aadd,
     compression=none,
@@ -188,10 +183,7 @@ Bloom filter:
 Delete Family Bloom filter:
     Not present
 
-</code></pre>
-
-<h3 id="e-printkey">-e,&ndash;printkey</h3>
-
+</code></pre><h3 id="-e--printkey">-e,&ndash;printkey</h3>
 <p>打印出所有的键(行键/列族:列限定符/时间戳/Put/vlen=数据长度/seqid=0)</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">... ...
 K: 50091132/f1:200/1476519526747/Put/vlen=138/seqid=0
@@ -202,19 +194,13 @@ K: 50092052/f1:200/1495774348548/Put/vlen=147/seqid=0
 K: 50092052/f1:200/1495774348214/Put/vlen=157/seqid=0
 K: 50092252/f1:200/1498108990911/Put/vlen=130/seqid=0
 K: 50092252/f1:200/1498108990811/Put/vlen=145/seqid=0
-... ...</code></pre></div>
-<h3 id="p-printkv">-p,&ndash;printkv</h3>
-
+... ...
+</code></pre></div><h3 id="-p--printkv">-p,&ndash;printkv</h3>
 <p>除了 <code>-e</code> 输出的信息，还输出 value</p>
-
-<h3 id="b-printblocks">-b,&ndash;printblocks</h3>
-
+<h3 id="-b--printblocks">-b,&ndash;printblocks</h3>
 <p>打印出每个数据块的大小，偏移量，保存的起始行键等。</p>
-
-<h3 id="h-printblockheaders">-h,&ndash;printblockheaders</h3>
-
+<h3 id="-h--printblockheaders">-h,&ndash;printblockheaders</h3>
 <p>打印出每个数据块的头信息，下面摘录出一个数据块的头</p>
-
 <pre><code>HFileBlock [ 
     fileOffset=65682 
     headerSize()=33 
@@ -247,52 +233,37 @@ K: 50092252/f1:200/1498108990811/Put/vlen=145/seqid=0
             ] 
         ] 
 ]
-</code></pre>
-
-<h2 id="其他">其他</h2>
-
-<h3 id="s-stats">-s,&ndash;stats</h3>
-
+</code></pre><h2 id="其他">其他</h2>
+<h3 id="-s--stats">-s,&ndash;stats</h3>
 <p>打印统计信息</p>
-
-<h3 id="w-seektorow-arg">-w,&ndash;seekToRow <arg></h3>
-
+<h3 id="-w--seektorow-arg">-w,&ndash;seekToRow <!-- raw HTML omitted --></h3>
 <p>只遍历某一行</p>
-
-<h3 id="r-region-arg">-r,&ndash;region <arg></h3>
-
+<h3 id="-r--region-arg">-r,&ndash;region <!-- raw HTML omitted --></h3>
 <p>以上所有参数都必须配合 <code>-f</code> 参数使用，来打印某个 HFile 的信息。
 如果不指定  <code>-f</code> ，也可以通过该参数，指定 <code>hbase:meta</code>表的一个行键，格式类似于 <code>tableName,startKey,timestamp.regionName.</code>，然后会自动根据 <code>hbase:meta</code>表的行键 找到该 Region 下的所有 HFile（主要靠 tableName 和 regionName 进行查找）</p>
-
 <pre><code>scan 'hbase:meta',{FILTER =&gt; &quot;(PrefixFilter ('dev')&quot;}
-</code></pre>
-
-<blockquote>
+</code></pre><blockquote>
 <p><a href="http://hbase.apache.org/book.html#arch.catalog">66. Catalog Tables</a></p>
 </blockquote>
-
-<h3 id="v-verbose">-v,&ndash;verbose</h3>
-
+<h3 id="-v--verbose">-v,&ndash;verbose</h3>
 <p>该参数主要配合 <code>-r</code> 参数使用；如果单独使用，会打印出行的数量</p>
-
 <h2 id="程序调用-示例">程序调用 示例</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span>(String[] <span style="color:#a6e22e">args</span>) <span style="color:#66d9ef">throws</span> <span style="color:#a6e22e">Exception</span> {
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
 
-    List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">params</span> <span style="color:#f92672">=</span> Arrays.<span style="color:#a6e22e">asList</span>(
-            <span style="color:#e6db74">&#34;-r&#34;</span>, <span style="color:#e6db74">&#34;test_table,,1521207497217.9983d7464bcf4488a0b89a51711048b5.&#34;</span>,
+    List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> params <span style="color:#f92672">=</span> Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">asList</span><span style="color:#f92672">(</span>
+            <span style="color:#e6db74">&#34;-r&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;test_table,,1521207497217.9983d7464bcf4488a0b89a51711048b5.&#34;</span><span style="color:#f92672">,</span>
             <span style="color:#e6db74">&#34;-v&#34;</span>
-    );
-    args <span style="color:#f92672">=</span> params.<span style="color:#a6e22e">toArray</span>(<span style="color:#66d9ef">new</span> String[params.<span style="color:#a6e22e">size</span>()]);
+    <span style="color:#f92672">);</span>
+    args <span style="color:#f92672">=</span> params<span style="color:#f92672">.</span><span style="color:#a6e22e">toArray</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> String<span style="color:#f92672">[</span>params<span style="color:#f92672">.</span><span style="color:#a6e22e">size</span><span style="color:#f92672">()]);</span>
 
-    Configuration <span style="color:#a6e22e">conf</span> <span style="color:#f92672">=</span> HBaseConfiguration.<span style="color:#a6e22e">create</span>();
-    conf.<span style="color:#a6e22e">setFloat</span>(HConstants.<span style="color:#a6e22e">HFILE_BLOCK_CACHE_SIZE_KEY</span>, 0);
-    conf.<span style="color:#a6e22e">set</span>(HConstants.<span style="color:#a6e22e">HBASE_DIR</span>, <span style="color:#e6db74">&#34;hdfs://s01.hbase.kail.xyz:8020/hbase&#34;</span>);
+    Configuration conf <span style="color:#f92672">=</span> HBaseConfiguration<span style="color:#f92672">.</span><span style="color:#a6e22e">create</span><span style="color:#f92672">();</span>
+    conf<span style="color:#f92672">.</span><span style="color:#a6e22e">setFloat</span><span style="color:#f92672">(</span>HConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">HFILE_BLOCK_CACHE_SIZE_KEY</span><span style="color:#f92672">,</span> 0<span style="color:#f92672">);</span>
+    conf<span style="color:#f92672">.</span><span style="color:#a6e22e">set</span><span style="color:#f92672">(</span>HConstants<span style="color:#f92672">.</span><span style="color:#a6e22e">HBASE_DIR</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;hdfs://s01.hbase.kail.xyz:8020/hbase&#34;</span><span style="color:#f92672">);</span>
 
-    <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">ret</span> <span style="color:#f92672">=</span> ToolRunner.<span style="color:#a6e22e">run</span>(conf, <span style="color:#66d9ef">new</span> HFilePrettyPrinter(), args);
-    System.<span style="color:#a6e22e">exit</span>(ret);
-}</code></pre></div>
-<h2 id="read-more">Read More</h2>
-
+    <span style="color:#66d9ef">int</span> ret <span style="color:#f92672">=</span> ToolRunner<span style="color:#f92672">.</span><span style="color:#a6e22e">run</span><span style="color:#f92672">(</span>conf<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> HFilePrettyPrinter<span style="color:#f92672">(),</span> args<span style="color:#f92672">);</span>
+    System<span style="color:#f92672">.</span><span style="color:#a6e22e">exit</span><span style="color:#f92672">(</span>ret<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h2 id="read-more">Read More</h2>
 <ul>
 <li><a href="http://hbasefly.com/2016/03/25/hbase-hfile">HBase – 存储文件HFile结构解析</a></li>
 <li><a href="http://hbase.apache.org/book.html#hfile">71.7.4. StoreFile (HFile)</a></li>
@@ -327,34 +298,34 @@ K: 50092252/f1:200/1498108990811/Put/vlen=145/seqid=0
 
   <aside class="book-toc level-3 fixed">
     <nav id="TableOfContents">
-<ul>
-<li><a href="#通过-hfile-tool-查看-hfile文件内容">通过 “HFile Tool” 查看 HFile文件内容</a>
-<ul>
-<li><a href="#hfile-文件-在-hdfs-上的位置">HFile 文件 在 HDFS 上的位置</a></li>
-<li><a href="#校验相关">校验相关</a>
-<ul>
-<li><a href="#k-checkrow">-k,&ndash;checkrow</a></li>
-<li><a href="#a-checkfamily">-a,&ndash;checkfamily</a></li>
-</ul></li>
-<li><a href="#打印">打印</a>
-<ul>
-<li><a href="#m-printmeta">-m,&ndash;printmeta</a></li>
-<li><a href="#e-printkey">-e,&ndash;printkey</a></li>
-<li><a href="#p-printkv">-p,&ndash;printkv</a></li>
-<li><a href="#b-printblocks">-b,&ndash;printblocks</a></li>
-<li><a href="#h-printblockheaders">-h,&ndash;printblockheaders</a></li>
-</ul></li>
-<li><a href="#其他">其他</a>
-<ul>
-<li><a href="#s-stats">-s,&ndash;stats</a></li>
-<li><a href="#w-seektorow-arg">-w,&ndash;seekToRow <arg></a></li>
-<li><a href="#r-region-arg">-r,&ndash;region <arg></a></li>
-<li><a href="#v-verbose">-v,&ndash;verbose</a></li>
-</ul></li>
-<li><a href="#程序调用-示例">程序调用 示例</a></li>
-<li><a href="#read-more">Read More</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#hfile-文件-在-hdfs-上的位置">HFile 文件 在 HDFS 上的位置</a></li>
+    <li><a href="#校验相关">校验相关</a>
+      <ul>
+        <li><a href="#-k--checkrow">-k,&ndash;checkrow</a></li>
+        <li><a href="#-a--checkfamily">-a,&ndash;checkfamily</a></li>
+      </ul>
+    </li>
+    <li><a href="#打印">打印</a>
+      <ul>
+        <li><a href="#-m--printmeta">-m,&ndash;printmeta</a></li>
+        <li><a href="#-e--printkey">-e,&ndash;printkey</a></li>
+        <li><a href="#-p--printkv">-p,&ndash;printkv</a></li>
+        <li><a href="#-b--printblocks">-b,&ndash;printblocks</a></li>
+        <li><a href="#-h--printblockheaders">-h,&ndash;printblockheaders</a></li>
+      </ul>
+    </li>
+    <li><a href="#其他">其他</a>
+      <ul>
+        <li><a href="#-s--stats">-s,&ndash;stats</a></li>
+        <li><a href="#-w--seektorow-arg">-w,&ndash;seekToRow <!-- raw HTML omitted --></a></li>
+        <li><a href="#-r--region-arg">-r,&ndash;region <!-- raw HTML omitted --></a></li>
+        <li><a href="#-v--verbose">-v,&ndash;verbose</a></li>
+      </ul>
+    </li>
+    <li><a href="#程序调用-示例">程序调用 示例</a></li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
 </nav>
   </aside>
 
