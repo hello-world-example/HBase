@@ -126,7 +126,7 @@ https://github.com/alex-shpak/hugo-book
 </ul>
 <h2 id="简介">简介</h2>
 <p>HBase 支持多版本，即支持向同一个 <code>rowkey:family:qualifier</code> 中写入多个 <code>timestamp</code> 不同的 <code>value</code>。<code>timestamp</code> 不仅可以由服务器根据写入时间生成，也可以由用户指定。尤其是在由用户指定的时候需要更加注意，因为常常会出现<strong>后写入数据的 <code>timestamp</code> 比之前写入的数据的  <code>timestamp</code>  还小的情况</strong>，即写入一个很久之前数据的情况。</p>
-<p>因为存储采用 <code>LSM (Log-Structured Merge Tree)</code> 结构， HBase 的删除操作并<strong>不会立即将数据从磁盘上删除</strong>，当执行删除操作时，会新插入一条相同的 KeyValue 数据，但是使 <code>keytype=Delete</code>，这便意味着数据被删除了，直到发生 <code>major_compact</code> 操作时，数据才会被真正的从磁盘上删除，删除标记也会从 <code>StoreFile</code> 删除。</p>
+<p>因为存储采用 <code>LSM (Log-Structured Merge Tree)</code> 结构， HBase 的删除操作并<strong>不会立即将数据从磁盘上删除</strong>，当执行删除操作时，会新插入一条相同的 KeyValue 数据，通过 keytype（如： <code>keytype=Delete</code>）标记删除类型。这意味着数据删除实际上也是一个普通的 Put 追加操作，直到发生 <code>major_compact</code> 操作时，数据才会被真正的从磁盘上删除，删除标记也会从 <code>StoreFile</code> 删除。</p>
 <h2 id="hbase-shell">hbase shell</h2>
 <h3 id="数据准备">数据准备</h3>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 创建一个表，最多可以有 5个 版本</span>
@@ -454,24 +454,20 @@ ROW    COLUMN+CELL
 <tr>
 <th>Delete 实例接口</th>
 <th>描述</th>
-<th></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>add(cell)</code></td>
 <td>通过 <code>KeyValue(r,f,c,ts,tp)</code> 自定义类型</td>
-<td></td>
 </tr>
 <tr>
 <td><code>setTimestamp(ts)</code></td>
 <td><code>addXxx</code> 接口的 ts 参数，默认取最新的数据版本</td>
-<td></td>
 </tr>
 <tr>
 <td><code>setTTL(ttl)</code></td>
 <td>抛出 <code>UnsupportedOperationException</code> 异常</td>
-<td></td>
 </tr>
 </tbody>
 </table>
@@ -491,7 +487,14 @@ ROW    COLUMN+CELL
 </article>
 
       
-<div class="book-footer justify-end">
+<div class="book-footer justify-between">
+  
+  <div>
+    
+    <a href="https://github.com/hello-world-example/HBase/commit/ca4d59f8bc1c11f004bedcd4e4fecb5c66bf4bbe" title='Last modified Mar 19, 2020 by 杨凯彬' target="_blank" rel="noopener">
+      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Mar 19, 2020
+    </a>
+  </div>
   
   
   <div>

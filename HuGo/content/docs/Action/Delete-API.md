@@ -13,7 +13,7 @@
 
 HBase 支持多版本，即支持向同一个 `rowkey:family:qualifier` 中写入多个 `timestamp` 不同的 `value`。`timestamp` 不仅可以由服务器根据写入时间生成，也可以由用户指定。尤其是在由用户指定的时候需要更加注意，因为常常会出现**后写入数据的 `timestamp` 比之前写入的数据的  `timestamp`  还小的情况**，即写入一个很久之前数据的情况。
 
-因为存储采用 `LSM (Log-Structured Merge Tree)` 结构， HBase 的删除操作并**不会立即将数据从磁盘上删除**，当执行删除操作时，会新插入一条相同的 KeyValue 数据，但是使 `keytype=Delete`，这便意味着数据被删除了，直到发生 `major_compact` 操作时，数据才会被真正的从磁盘上删除，删除标记也会从 `StoreFile` 删除。
+因为存储采用 `LSM (Log-Structured Merge Tree)` 结构， HBase 的删除操作并**不会立即将数据从磁盘上删除**，当执行删除操作时，会新插入一条相同的 KeyValue 数据，通过 keytype（如： `keytype=Delete`）标记删除类型。这意味着数据删除实际上也是一个普通的 Put 追加操作，直到发生 `major_compact` 操作时，数据才会被真正的从磁盘上删除，删除标记也会从 `StoreFile` 删除。
 
 
 
@@ -291,11 +291,11 @@ ROW    COLUMN+CELL
 
 ### 其他操作
 
-| Delete 实例接口    | 描述                                          |      |
-| ------------------ | --------------------------------------------- | ---- |
-| `add(cell)`        | 通过 `KeyValue(r,f,c,ts,tp)` 自定义类型       |      |
-| `setTimestamp(ts)` | `addXxx` 接口的 ts 参数，默认取最新的数据版本 |      |
-| `setTTL(ttl)`      | 抛出 `UnsupportedOperationException` 异常     |      |
+| Delete 实例接口    | 描述                                          |
+| ------------------ | --------------------------------------------- |
+| `add(cell)`        | 通过 `KeyValue(r,f,c,ts,tp)` 自定义类型       |
+| `setTimestamp(ts)` | `addXxx` 接口的 ts 参数，默认取最新的数据版本 |
+| `setTTL(ttl)`      | 抛出 `UnsupportedOperationException` 异常     |
 
 ## 小结
 
