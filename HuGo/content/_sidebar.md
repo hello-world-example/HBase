@@ -15,7 +15,7 @@ headless: true
   * [Family]({{< relref "/docs/Core/Family-Properties.md" >}})
   * [Filter]({{< relref "/docs/Core/Filter.md" >}})
   * [_架构简介]({{< relref "/docs/Core/Architecture.md" >}})
-  * [压缩和编码]({{< relref "/docs/Core/_Compression-and-Data-Block-Encoding" >}})
+  * [压缩和编码]({{< relref "/docs/Core/-Compression-and-Data-Block-Encoding" >}})
   * 写路径和优化
   * 读路径和优化
   * LSM Tree

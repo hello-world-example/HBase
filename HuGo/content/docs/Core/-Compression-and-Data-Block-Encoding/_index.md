@@ -76,11 +76,11 @@ public enum DataBlockEncoding {
 
 ##### 原始数据
 
-<img src="_images/data_block_no_encoding-20200322221135479.png" alt="data block no encoding" style="zoom:50%;" />
+![data block no encoding](-images/data_block_no_encoding-20200322221135479.png)
 
 ##### 编码后的数据
 
-<img src="_images/data_block_prefix_encoding-20200322221223570.png" alt="data block prefix encoding" style="zoom: 50%;" />
+![data block diff encoding](-images/data_block_prefix_encoding-20200322221223570.png)
 
 #### DIFF
 
@@ -89,7 +89,7 @@ public enum DataBlockEncoding {
 - `DIFF` 会导致写数据，以及 Scan 数据更慢
 - 但是相对于 `PREFIX` / `NONE`，它会在 **Block Cache** 中缓存更多数据．
 
-![data block diff encoding](_images/data_block_diff_encoding-20200322221710174.png)
+![data_block_diff_encoding](-images/data_block_diff_encoding-20200322221710174.png)
 
 #### ❤ FAST_DIFF
 
