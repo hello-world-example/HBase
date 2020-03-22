@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mem Store and Block Cache | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/docs/Core/-MemStore-and-BlockCache/index.xml" title="HBase" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2f-MemStore-and-BlockCache\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
+<li><strong>Cli</strong>
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
+</ul>
+</li>
+<li><strong>Core</strong>
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">_架构简介</a></li>
+<li><a href="/HBase/docs/Core/-Compression-and-Data-Block-Encoding/">压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
+<li><strong>Action</strong>
+<ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
+<li><strong>Opt</strong>
+<ul>
+<li>_Zookeeper 目录结构</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Mem Store and Block Cache</strong>
+</header>
+
+      
+<article class="markdown"><h1 id="memstore-和-block">MemStore 和 Block</h1>
+<p>我们可以看到，RowKey需要重复保存很多次，而且Family:Column这个往往都是非常相似的，它也需要保存很多次．这对磁盘非常不友好．当Family:Column越多时，就需要占用越多不必要的磁盘空间．</p>
+<p>如果仅仅是磁盘空间，也没什么关系，毕竟我们可以通过Snappy/GZ等压缩方式，对HFile进行Compression．而且磁盘又便宜，对吧？</p>
+<p>可是，对HBase熟悉的读者，都知道，当读取数据时，是需要先读MemStore，然后再读BlockCache的．那我们的Block越小，能放到BlockCache中的数据就越多，命中率就越高，对Scan就越友好．</p>
+<p>Block Encoding就是做这件事情的，它就是通过某种算法，对Data Block中的数据进行压缩，这样Block的Size小了，放到Block Cache中的就多了．</p>
+<p>这儿提出两个问题:</p>
+<ul>
+<li>压缩以后，占的Disk/Memory是少了，但是解压的时候，需要更多的CPU时间．如何均衡呢?</li>
+<li>如果我们的业务，偏重的是随机Get，那放到Block Cache中不一定好吧？不仅放到Block Cache中的Block很容易读不到，对性能并没有什么提升，还会产生额外的开销，比如将其它偏重Scan的业务的Block排挤出Block Cache，导致其它业务变慢．</li>
+</ul>
+<p>作者：AlstonWilliams
+链接：https://www.jianshu.com/p/a62e49f749f3
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+</article>
+
+      
+<div class="book-footer justify-between">
+  
+  <div>
+    
+    <a href="https://github.com/hello-world-example/HBase/commit/4798d6eabaf53fd2c2360aa5f093f22b3e57a4ce" title='Last modified Mar 22, 2020 by 杨凯彬' target="_blank" rel="noopener">
+      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Mar 22, 2020
+    </a>
+  </div>
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/-MemStore-and-BlockCache/_index.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents"></nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>
