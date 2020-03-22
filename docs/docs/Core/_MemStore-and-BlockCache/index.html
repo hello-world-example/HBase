@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Port | HBase</title>
+<title>Mem Store and Block Cache | HBase</title>
 
 
 <link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
@@ -15,6 +15,7 @@
 <link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
 
 
+<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/docs/Core/_MemStore-and-BlockCache/index.xml" title="HBase" />
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -44,7 +45,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   <style>
-  nav ul a[href$="\2fHBase\2f docs\2f Core\2fPort\2f "] {
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2f_MemStore-and-BlockCache\2f "] {
       color: #004ed0;
   }
   </style>
@@ -117,85 +118,32 @@ https://github.com/alex-shpak/hugo-book
   <label for="menu-control">
     <img src="/HBase/svg/menu.svg" alt="Menu" />
   </label>
-  <strong>Port</strong>
+  <strong>Mem Store and Block Cache</strong>
 </header>
 
       
-<article class="markdown"><h1 id="常用端口">常用端口</h1>
-<table>
-<thead>
-<tr>
-<th>端口</th>
-<th>描述</th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>2181</td>
-<td>Zookeeper 端口</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>8080</td>
-<td>HBase REST Port</td>
-<td><code>hbase.rest.port</code></td>
-<td></td>
-</tr>
-<tr>
-<td>16000</td>
-<td>HBase Master</td>
-<td><code>hbase.master.port</code></td>
-<td>1.0 之前 <strong>60000</strong></td>
-</tr>
-<tr>
-<td>16010</td>
-<td><strong>HBase Master Web UI port</strong></td>
-<td><code>hbase.master.info.port</code></td>
-<td>1.0 之前 <strong>60010</strong></td>
-</tr>
-<tr>
-<td>16020</td>
-<td>HBase RegionServer Port</td>
-<td><code>hbase.regionserver.port</code></td>
-<td>1.0 之前 <strong>60020</strong></td>
-</tr>
-<tr>
-<td>16030</td>
-<td>HBase RegionServer Web UI port</td>
-<td><code>hbase.regionserver.info.port</code></td>
-<td>1.0 之前 <strong>60030</strong></td>
-</tr>
-</tbody>
-</table>
-<h2 id="read-more">Read More</h2>
+<article class="markdown"><h1 id="memstore-和-block">MemStore 和 Block</h1>
+<p>我们可以看到，RowKey需要重复保存很多次，而且Family:Column这个往往都是非常相似的，它也需要保存很多次．这对磁盘非常不友好．当Family:Column越多时，就需要占用越多不必要的磁盘空间．</p>
+<p>如果仅仅是磁盘空间，也没什么关系，毕竟我们可以通过Snappy/GZ等压缩方式，对HFile进行Compression．而且磁盘又便宜，对吧？</p>
+<p>可是，对HBase熟悉的读者，都知道，当读取数据时，是需要先读MemStore，然后再读BlockCache的．那我们的Block越小，能放到BlockCache中的数据就越多，命中率就越高，对Scan就越友好．</p>
+<p>Block Encoding就是做这件事情的，它就是通过某种算法，对Data Block中的数据进行压缩，这样Block的Size小了，放到Block Cache中的就多了．</p>
+<p>这儿提出两个问题:</p>
 <ul>
-<li>官方文档 <a href="http://hbase.apache.org/book.html#hbase_default_configurations">7.2. HBase Default Configuration</a></li>
-<li><a href="https://blog.csdn.net/Brady_heitong/article/details/79404331">CDH端口汇总</a></li>
+<li>压缩以后，占的Disk/Memory是少了，但是解压的时候，需要更多的CPU时间．如何均衡呢?</li>
+<li>如果我们的业务，偏重的是随机Get，那放到Block Cache中不一定好吧？不仅放到Block Cache中的Block很容易读不到，对性能并没有什么提升，还会产生额外的开销，比如将其它偏重Scan的业务的Block排挤出Block Cache，导致其它业务变慢．</li>
 </ul>
+<p>作者：AlstonWilliams
+链接：https://www.jianshu.com/p/a62e49f749f3
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
 </article>
 
       
-<div class="book-footer justify-between">
-  
-  <div>
-    
-    <a href="https://github.com/hello-world-example/HBase/commit/26054b799cb6a44087b7e408997599428320184b" title='Last modified Feb 3, 2020 by 杨凯彬' target="_blank" rel="noopener">
-      <img src="/HBase/svg/calendar.svg" alt="Changed" /> Feb 3, 2020
-    </a>
-  </div>
+<div class="book-footer justify-end">
   
   
   <div>
-    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/Port.md" target="_blank" rel="noopener">
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/_MemStore-and-BlockCache/_index.md" target="_blank" rel="noopener">
       <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
     </a>
   </div>
@@ -210,11 +158,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   <aside class="book-toc level-3 fixed">
-    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#read-more">Read More</a></li>
-  </ul>
-</nav>
+    <nav id="TableOfContents"></nav>
   </aside>
 
 

@@ -73,15 +73,6 @@ Bulk Loading 概述 如果您使用传统方式（API、MapReduce）会有下面
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/Core/Compression-and-Data-Block-Encoding/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://hello-world-example.github.io/HBase/docs/Core/Compression-and-Data-Block-Encoding/</guid>
-      <description>Compression 和 Data Block Encoding Read More  Apache HBase ™ Reference Guide  Appendix D: Compression and Data Block Encoding In HBase    </description>
-    </item>
-    
-    <item>
-      <title></title>
       <link>https://hello-world-example.github.io/HBase/docs/Core/Family-Properties/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -114,6 +105,16 @@ public CompareFilter(final CompareOp compareOp, final ByteArrayComparable compar
       
       <guid>https://hello-world-example.github.io/HBase/docs/Core/Port/</guid>
       <description>常用端口    端口 描述       2181 Zookeeper 端口           8080 HBase REST Port hbase.rest.port    16000 HBase Master hbase.master.port 1.0 之前 60000   16010 HBase Master Web UI port hbase.master.info.port 1.0 之前 60010   16020 HBase RegionServer Port hbase.regionserver.port 1.0 之前 60020   16030 HBase RegionServer Web UI port hbase.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://hello-world-example.github.io/HBase/docs/Core/Read-Path/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://hello-world-example.github.io/HBase/docs/Core/Read-Path/</guid>
+      <description>第二个新功能是全链路 Off-heap，意思就是读写链路数据端到端 Off-heap，减少 java GC 带来的停顿，进一步降低 P999 延迟，提高吞吐。这个功能我们从两方面来实现的：写链路 Off-heap，我们使用在 RPC 层使用 Netty 的 Off-heap ByteBuffer，使用支持 Off-heap 的 Protobuf。同时使用 Off-heap 的 Chunk 来存储 Memstore 中的 KeyValue。
+在读链路 Off-heap 方面，使用 Off-heap 的 Bucket Cache，HBase 自己管理内存的，我们从 Bucket Cache 读取数据的时候，先要从 Protobuf 做一次拷贝，因为可能读取的时候，发生内存不够了，再次分配的情况。在读取对 Bucket Cache 进行引用计数，保证读取的时候，内存不会被回收掉，读取时不再需要先拷贝到 heap，对 Bucket Cache 进行了一系列性能优化。</description>
     </item>
     
     <item>
@@ -193,18 +194,6 @@ Master hbase.</description>
       
       <guid>https://hello-world-example.github.io/HBase/docs/Install/Stand-Alone-Local-File/</guid>
       <description>单机本地文件系统 # 下载 wget http://mirrors.hust.edu.cn/apache/hbase/stable/hbase-1.2.6-bin.tar.gz vim hbase-1.2.6/conf/hbase-site.xml # 新增 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.rootdir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;file:///opt/data/hbase&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=true 设置true，最好指定 Zookeeper 的数据路劲 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.zookeeper.property.dataDir&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;/opt/data/hbase-zookeeper&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; # # 如果 hbase-env.sh 中 export HBASE_MANAGES_ZK=false 设置false，需要再加入以下配置 # &amp;lt;property&amp;gt; # &amp;lt;name&amp;gt;hbase.cluster.distributed&amp;lt;/name&amp;gt; # &amp;lt;value&amp;gt;true&amp;lt;/value&amp;gt; # &amp;lt;/property&amp;gt; vim hbase-1.2.6/conf/hbase-env.sh # 修改 JAVA_HOME， 去掉前面的 #， # export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/ # 修改 HBASE_CLASSPATH ，去掉前面的 # # export HBASE_CLASSPATH=/opt/websuite/hbase-1.2.6 # 默认是 true ，如果使用 外部 Zookeeper ，设置为 false 即可 # export HBASE_MANAGES_ZK=true # 启动 Hbase .</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/todo/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://hello-world-example.github.io/HBase/docs/todo/</guid>
-      <description>org.apache.hadoop.hbase.io.hfile.HFile ./hbase org.apache.hadoop.hbase.io.hfile.HFile -m -f /hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3
-Block index size as per heapsize: 704
-reader=/hbase-sc/data/news/NewsClickFeedback/627b1d95153d4157351b65135ab701a3/Toutiao/011b41375e584530a24a3a203b9ce1a3,
-compression=snappy, cacheConf=CacheConfig:disabled, firstKey=a0000000be3d27a5a11d203f798781a9/Toutiao:ClickViewTS/1465783628056/Put, lastKey=a80072cbf409d04542f272446d4b65a4/Toutiao:ClickViewTS/1465776679416/Put, avgKeyLen=62, avgValueLen=93, entries=6451829, length=698454846  hbase org.apache.hadoop.hbase.mapreduce.Driver &amp;hellip;&amp;hellip;</description>
     </item>
     
   </channel>

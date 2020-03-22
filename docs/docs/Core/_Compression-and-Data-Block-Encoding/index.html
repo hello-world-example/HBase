@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compression and Data Block Encoding | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/docs/Core/_Compression-and-Data-Block-Encoding/index.xml" title="HBase" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2f_Compression-and-Data-Block-Encoding\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
+<li><strong>Cli</strong>
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
+</ul>
+</li>
+<li><strong>Core</strong>
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">_架构简介</a></li>
+<li><a href="/HBase/docs/Core/_Compression-and-Data-Block-Encoding/">_压缩和编码</a></li>
+<li>写路径和优化</li>
+<li>读路径和优化</li>
+<li>LSM Tree</li>
+</ul>
+</li>
+<li><strong>Action</strong>
+<ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
+<li><strong>Opt</strong>
+<ul>
+<li>_Zookeeper 目录结构</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Compression and Data Block Encoding</strong>
+</header>
+
+      
+<article class="markdown"><h1 id="compression-和-data-block-encoding">Compression 和 Data Block Encoding</h1>
+<h2 id="概述">概述</h2>
+<ul>
+<li>编码（<code>Data Block Encoding</code>） 和 压缩（<code>Compression</code>） 的目的都通过一定的算法减少数据的大小，从而节省空间提升存储效率，时间换空间，即通过提高 CPU 的利用率来减少存储的消耗</li>
+<li>编码（<code>Data Block Encoding</code>） 主要针对 Key，即 <code>RowKey:Family:Qualifier:Timestamp</code></li>
+<li>压缩（<code>Compression</code>）主要针对 Value，即 真实的数据</li>
+<li>两者都是针对 <code>Family</code> 进行设置，也可同时使用</li>
+<li><strong>写路径</strong>： Finish DataBlock –&gt; <code>Encoding KVs</code> –&gt; <code>Compress DataBlock</code> –&gt; Flush</li>
+<li><strong>读路径</strong>： Read Block From Disk –&gt; <code>DeCompress DataBlock</code>–&gt; Cache DataBlock –&gt; <code>Decoding Scan KVs</code></li>
+<li>如果变更 压缩 或 编码方式，不会立即生效，会在 <code>compact</code>（合并 HFile） 阶段生效</li>
+</ul>
+<h3 id="-如何选择">❤ 如何选择</h3>
+<p>如何选择 编码 和 压缩，取决于数据特征。通常需要在 <strong>更小的空间</strong> 和 <strong>更快的 编码/解压缩</strong> 之间权衡选择，一般压缩率越高则速度更慢，反之亦然，以下建议供参考：</p>
+<ul>
+<li>如果 Key 占用空间较大，或者有很多个 <code>Qualifier</code> ，建议开启 <code>FAST_DIFF</code> 编码
+<ul>
+<li>如： <code>r00001:F:address:111111</code> -&gt; <code>0</code> ，Value 就一个数字或者几个字符</li>
+</ul>
+</li>
+<li>如果 Value 很大，建议使用压缩
+<ul>
+<li>如： <code>r00001:F:c:111111</code> -&gt; <code>{name:'xx', info:{} }</code>  Value 是大段的文本</li>
+</ul>
+</li>
+<li>如果存储的是很少的使用的 冷数据，可使用 <code>gz</code>，相对 <code>snappy</code> 或 <code>lzo</code> 虽然需要更多的 CPU 资源，但是压缩率更高</li>
+<li>如果是经常访问的数据，则可选择  <code>snappy</code> 或 <code>lzo</code>； 如果判断不了冷热特征，那就选择  <code>snappy</code></li>
+</ul>
+<blockquote>
+<p>以上建议来自于 官方文档 <a href="http://hbase.apache.org/book.html#data.block.encoding.types">D.1. Which Compressor or Data Block Encoder To Use</a>，<strong>可能会略显陈旧</strong></p>
+<p>可关注 <code>zstd</code> 这种压缩算法，适合小数据</p>
+<ul>
+<li>zstd 官方测试数据： <a href="https://github.com/facebook/zstd#benchmarks">https://github.com/facebook/zstd#benchmarks</a></li>
+<li><a href="https://www.jianshu.com/p/71eb3071d3e0">zstd，未来可期的数据压缩算法</a></li>
+</ul>
+</blockquote>
+<h2 id="编码器">编码器</h2>
+<h3 id="现有支持">现有支持</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> org.apache.hadoop.hbase.io.encoding<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// @since 2.1.0
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> DataBlockEncoding <span style="color:#f92672">{</span>
+
+  NONE<span style="color:#f92672">(</span>0<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">),</span>
+  
+  <span style="color:#75715e">// id 1 is reserved for the BITSET algorithm to be added later
+</span><span style="color:#75715e"></span>  
+  PREFIX<span style="color:#f92672">(</span>2<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;org.apache.hadoop.hbase.io.encoding.PrefixKeyDeltaEncoder&#34;</span><span style="color:#f92672">),</span>
+  
+  DIFF<span style="color:#f92672">(</span>3<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;org.apache.hadoop.hbase.io.encoding.DiffKeyDeltaEncoder&#34;</span><span style="color:#f92672">),</span>
+  
+  FAST_DIFF<span style="color:#f92672">(</span>4<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;org.apache.hadoop.hbase.io.encoding.FastDiffDeltaEncoder&#34;</span><span style="color:#f92672">),</span>
+  
+  <span style="color:#75715e">// id 5 is reserved for the COPY_KEY algorithm for benchmarking
+</span><span style="color:#75715e"></span>  <span style="color:#75715e">// COPY_KEY(5, &#34;org.apache.hadoop.hbase.io.encoding.CopyKeyDataBlockEncoder&#34;),
+</span><span style="color:#75715e"></span>  
+  <span style="color:#75715e">// 没了
+</span><span style="color:#75715e"></span>  <span style="color:#75715e">// PREFIX_TREE(6, &#34;org.apache.hadoop.hbase.codec.prefixtree.PrefixTreeCodec&#34;),
+</span><span style="color:#75715e"></span>  
+  ROW_INDEX_V1<span style="color:#f92672">(</span>7<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;org.apache.hadoop.hbase.io.encoding.RowIndexCodecV1&#34;</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="算法简介">算法简介</h3>
+<h4 id="prefix">PREFIX</h4>
+<p>一般来说，同一个 Block 中的 Key ( <code>KeyValue</code> 中的 <code>Key</code>，不仅包含 <code>RowKey</code>，还包含 <code>Family:Column</code> )，都很相似．它们往往只是最后的几个字符不同．例如，KeyA 是 <code>RowKey:Family:Qualifier0</code>，跟它相邻的下一个KeyB可能是 <code>RowKey:Family:Qualifier1</code>．</p>
+<p><strong>如果相邻 Key 之间，完全没有共同点，那 PREFIX 显然毫无用处，还增加了额外的开销</strong></p>
+<p>在 PREFIX 会额外添加一列，表示当前 Key 和 它前一个 Key 相同的前缀的长度 <code>PrefixLength</code>，如下图对比</p>
+<h5 id="原始数据">原始数据</h5>
+<p><!-- raw HTML omitted --></p>
+<h5 id="编码后的数据">编码后的数据</h5>
+<p><!-- raw HTML omitted --></p>
+<h4 id="diff">DIFF</h4>
+<p><code>DIFF</code> 是对 <code>PREFIX</code> 的一种改良．<strong>它把 Key 看成多个部分，对每部分进行压缩，提高压缩率</strong></p>
+<ul>
+<li><code>DIFF</code> 会导致写数据，以及 Scan 数据更慢</li>
+<li>但是相对于 <code>PREFIX</code> / <code>NONE</code>，它会在 <strong>Block Cache</strong> 中缓存更多数据．</li>
+</ul>
+<p><img src="_images/data_block_diff_encoding-20200322221710174.png" alt="data block diff encoding"></p>
+<h4 id="-fast_diff">❤ FAST_DIFF</h4>
+<p><code>FAST_DIFF</code> 跟 <code>DIFF</code> 非常相似，<strong>如果 Key 很长 或者 有很多Column，那么推荐使用 FAST_DIFF</strong></p>
+<h4 id="prefix_tree"><del>PREFIX_TREE</del></h4>
+<p><strong>Trie Tree</strong> 算法，新版好像废弃了</p>
+<h4 id="row_index_v1">ROW_INDEX_V1</h4>
+<blockquote>
+<p>资料很少，从官方 Issues 找到了一些介绍资料： <a href="https://issues.apache.org/jira/browse/HBASE-16213">A new HFileBlock structure for fast random get</a></p>
+<ul>
+<li>which could <strong>improve random read (get)</strong> performance especially <strong>when the average record size (key-value size per row) is small</strong></li>
+<li>Please note that if we turn this DBE on, <strong>HFile block will be bigger than NONE encoding</strong> because it adds some meta infos <strong>for binary search</strong></li>
+</ul>
+</blockquote>
+<p>从官方 Issues 的描述看出</p>
+<ul>
+<li><code>ROW_INDEX_V1</code>  不是为了减小数据大小（<strong>编码后占用空间更大</strong>），而是<strong>为了提升搜索性能</strong></li>
+<li>HBase 的原始遍历方式是线性遍历，即从 StartRow 一直到 EndRow</li>
+<li><code>ROW_INDEX_V1</code>  会在 DataBlock 头部添加一些 Index 信息，使其<strong>可进行 二分查找（binary search）</strong></li>
+<li>提升 随机 Get 性能，对于大批数据的 Scan 操作可能并无提升效果</li>
+</ul>
+<h3 id="设置编码方式">设置编码方式</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 创建</span>
+&gt; create <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, DATA_BLOCK_ENCODING <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;FAST_DIFF&#39;</span> <span style="color:#f92672">}</span>
+
+<span style="color:#75715e"># 修改</span>
+&gt; disable <span style="color:#e6db74">&#39;test&#39;</span>;
+&gt; alter <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, DATA_BLOCK_ENCODING <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;ROW_INDEX_V1&#39;</span><span style="color:#f92672">}</span>
+&gt; enable <span style="color:#e6db74">&#39;test&#39;</span>;
+&gt; major_compact <span style="color:#e6db74">&#39;test&#39;</span>;
+</code></pre></div><h2 id="压缩算法">压缩算法</h2>
+<h3 id="支持的算法">支持的算法</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> org.apache.hadoop.hbase.io.compress<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// @since 2.1.0
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Compression</span> <span style="color:#f92672">{</span>
+
+  <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">enum</span> Algorithm <span style="color:#f92672">{</span>
+    NONE<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;none&#34;</span><span style="color:#f92672">)</span>  <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+
+    ZSTD<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;zstd&#34;</span><span style="color:#f92672">)</span>  <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    LZ4<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lz4&#34;</span><span style="color:#f92672">)</span>  <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    SNAPPY<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;snappy&#34;</span><span style="color:#f92672">)</span>  <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    GZ<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;gz&#34;</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    BZIP2<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;bzip2&#34;</span><span style="color:#f92672">)</span>  <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    LZO<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;lzo&#34;</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span> <span style="color:#f92672">...</span> <span style="color:#f92672">},</span>
+    <span style="color:#f92672">...</span>
+  <span style="color:#f92672">}</span>
+  <span style="color:#f92672">...</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="检查本地库">检查本地库</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 为 true 说明可用</span>
+$ hbase --config /hbase/conf org.apache.hadoop.util.NativeLibraryChecker 
+Native library checking:
+hadoop:  true 
+zlib:    true 
+snappy:  false 
+lz4:     true 
+bzip2:   false 
+openssl: false 
+</code></pre></div><h3 id="测试算法是否可用">测试算法是否可用</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ hbase org.apache.hadoop.hbase.util.CompressionTest /root/gz gz.
+..
+2020-03-22 13:04:58,453 INFO  <span style="color:#f92672">[</span>main<span style="color:#f92672">]</span> compress.CodecPool: Got brand-new compressor <span style="color:#f92672">[</span>.gz<span style="color:#f92672">]</span>
+2020-03-22 13:04:58,542 INFO  <span style="color:#f92672">[</span>main<span style="color:#f92672">]</span> compress.CodecPool: Got brand-new compressor <span style="color:#f92672">[</span>.gz<span style="color:#f92672">]</span>
+2020-03-22 13:04:58,755 INFO  <span style="color:#f92672">[</span>main<span style="color:#f92672">]</span> compress.CodecPool: Got brand-new decompressor <span style="color:#f92672">[</span>.gz<span style="color:#f92672">]</span>
+..
+
+
+$ hbase org.apache.hadoop.hbase.util.CompressionTest /root/snappy snappy
+..
+Exception in thread <span style="color:#e6db74">&#34;main&#34;</span> java.lang.RuntimeException: native snappy library not available: this version of libhadoop was built without snappy support.
+..
+</code></pre></div><h3 id="-压缩算法对比">❤ 压缩算法对比</h3>
+<table>
+<thead>
+<tr>
+<th align="center">编码器</th>
+<th align="center">场景</th>
+<th>传说</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><strong>zstd</strong></td>
+<td align="center">热</td>
+<td>压缩率比 <code>gz</code> 提高一倍<!-- raw HTML omitted -->压缩性能与 <code>lz4</code>、<code>snappy</code> 相当甚至更好，是 <code>gz</code> 的 10倍以上</td>
+<td><code>o.a.h.i.compress.ZStandardCodec</code></td>
+</tr>
+<tr>
+<td align="center"><strong>lz4</strong></td>
+<td align="center">热</td>
+<td>与 <code>snappy</code>/<code>lzo</code> 比 压缩率相差不多，但解压缩更快</td>
+<td><code>o.a.h.i.compress.Lz4Codec</code></td>
+</tr>
+<tr>
+<td align="center">snappy</td>
+<td align="center">热</td>
+<td>压缩率没有 gz 高，但是 CPU 消耗更少</td>
+<td><code>o.a.h.i.compress.SnappyCodec</code></td>
+</tr>
+<tr>
+<td align="center"><strong>gz</strong></td>
+<td align="center">冷</td>
+<td>相比 <code>snappy</code>、<code>lzo</code> 压缩率更高，但 CPU 消耗的也更多</td>
+<td><code>o.a.h.i.compress.GzipCodec</code></td>
+</tr>
+<tr>
+<td align="center">bzip2</td>
+<td align="center">冷</td>
+<td>比 <code>gz</code> 压缩率高，单速度更慢</td>
+<td><code>o.a.h.i.compress.BZip2Codec</code></td>
+</tr>
+<tr>
+<td align="center"><del>lzo</del></td>
+<td align="center">热</td>
+<td>可使用 <code>snappy</code> 代替</td>
+<td><code>com.hadoop.compression.lzo.LzoCodec</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="设置压缩方式">设置压缩方式</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 创建</span>
+&gt; create <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span> NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, COMPRESSION <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;lz4&#39;</span> <span style="color:#f92672">}</span>
+
+<span style="color:#75715e"># 修改</span>
+&gt; disable <span style="color:#e6db74">&#39;test&#39;</span>;
+&gt; alter <span style="color:#e6db74">&#39;test&#39;</span>, <span style="color:#f92672">{</span>NAME <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;F&#39;</span>, COMPRESSION <span style="color:#f92672">=</span>&gt; <span style="color:#e6db74">&#39;gz&#39;</span><span style="color:#f92672">}</span>
+&gt; enable <span style="color:#e6db74">&#39;test&#39;</span>;
+&gt; major_compact <span style="color:#e6db74">&#39;test&#39;</span>;
+</code></pre></div><h3 id="测试压缩性能">测试压缩性能</h3>
+<h4 id="帮助">帮助</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ hbase org.apache.hadoop.hbase.util.LoadTestTool -h
+usage: hbase org.apache.hadoop.hbase.util.LoadTestTool &lt;options&gt;
+Options:
+ -v,--verbose                    显示详细日志
+ -zk &lt;arg&gt;                       ❤ Zookeeper 地址
+ -zk_root &lt;arg&gt;                  name of parent znode in zookeeper
+ -tn &lt;arg&gt;                       ❤ 测试读写的表名
+ -families &lt;arg&gt;                 列族名，多个用逗号分割
+ -write &lt;arg&gt;                    ❤ &lt;avg_cols_per_key&gt;:&lt;avg_data_size&gt;<span style="color:#f92672">[</span>:&lt;<span style="color:#75715e">#threads=20&gt;]</span>
+ -read &lt;arg&gt;                     ❤ &lt;verify_percent&gt;<span style="color:#f92672">[</span>:&lt;<span style="color:#75715e">#threads=20&gt;]</span>
+ -update &lt;arg&gt;                   ❤ &lt;update_percent&gt;<span style="color:#f92672">[</span>:&lt;<span style="color:#75715e">#threads=20&gt;][:&lt;#whether to ignore nonce collisions=0&gt;]</span>
+ -init_only                      ❤ 仅初始化表，不做压测
+ -bloom &lt;arg&gt;                    布隆过滤器类型 <span style="color:#f92672">[</span>NONE, ROW, ROWCOL<span style="color:#f92672">]</span>
+ -compression &lt;arg&gt;              ❤ 压缩算法 <span style="color:#f92672">[</span>LZO, GZ, NONE, SNAPPY, LZ4, BZIP2, ZSTD<span style="color:#f92672">]</span>
+ -data_block_encoding &lt;arg&gt;      ❤ 编码算法 <span style="color:#f92672">[</span>NONE, PREFIX, DIFF, FAST_DIFF, ROW_INDEX_V1<span style="color:#f92672">]</span>.
+ -max_read_errors &lt;arg&gt;          允许的最大读取错误数.默认 10.
+ -multiget_batchsize &lt;arg&gt;       是否对每一行的多列使用 multi-gets 而不是 get
+ -key_window &lt;arg&gt;               The <span style="color:#e6db74">&#39;key window&#39;</span> to maintain between reads and writes <span style="color:#66d9ef">for</span> concurrent write/read workload. The default is 0.
+ -multiput                       是否使用 multi-puts 而不是 put
+ -batchupdate                    是否使用批量更新
+ -in_memory                      inmemory 模式
+ -generator &lt;arg&gt;                自定义数据生成器的类
+ -writer &lt;arg&gt;                   执行写入的 Class
+ -updater &lt;arg&gt;                  执行更新的 Class
+ -reader &lt;arg&gt;                   执行读取的 Class
+ -num_keys &lt;arg&gt;                 ❤ 读写 RowKey 的数量
+ -start_key &lt;arg&gt;                StartKey. 默认 0.
+ -skip_init                      ❤ 跳过初始化，适合测试表已经存在的情况
+ -num_tables &lt;arg&gt;               ❤ 指定 正整数 n，测试程序将并行加载 n 个表，-tn 参数变为表名的前缀，表名变为 tn_1/tn_1/tn_../tn_n
+ -encryption &lt;arg&gt;               传输加密，可选值 <span style="color:#f92672">[</span>AES<span style="color:#f92672">]</span>
+ -deferredlogflush               Enable deferred log flush.
+ -num_regions_per_server &lt;arg&gt;   每个 region server 的 regions 个数. 默认 5.
+ -region_replication &lt;arg&gt;       region 的副本数
+ -region_replica_id &lt;arg&gt;        Region replica id to <span style="color:#66d9ef">do</span> the reads from
+ -mob_threshold &lt;arg&gt;            超过指定的字节将启用 MOB 写路径
+</code></pre></div><h4 id="示例">示例</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># -write &lt;avg_cols_per_key&gt;:&lt;avg_data_size&gt;[:&lt;#threads=20&gt;]</span>
+<span style="color:#75715e"># -num_keys 读写 RowKey 的数量</span>
+<span style="color:#75715e"># -read &lt;verify_percent&gt;[:&lt;#threads=20&gt;]</span>
+<span style="color:#75715e"># -num_tables 指定 正整数 n，测试程序将并行加载 n 个表，-tn 参数变为表名的前缀，表名变为 tn_1/tn_1/tn_../tn_n</span>
+<span style="color:#75715e"># -data_block_encoding 编码算法 [NONE, PREFIX, DIFF, FAST_DIFF, ROW_INDEX_V1].</span>
+<span style="color:#75715e"># -tn 测试读写的表名</span>
+$ hbase org.apache.hadoop.hbase.util.LoadTestTool <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-write 1:10:100 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-num_keys <span style="color:#ae81ff">1000000</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-read 100:30 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-num_tables <span style="color:#ae81ff">1</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-data_block_encoding NONE <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>	-tn load_test_table_name
+</code></pre></div><h2 id="read-more">Read More</h2>
+<ul>
+<li>Apache HBase ™ Reference Guide
+<ul>
+<li><a href="http://hbase.apache.org/book.html#compression">Appendix D: Compression and Data Block Encoding In HBase</a></li>
+</ul>
+</li>
+<li><a href="https://www.jianshu.com/p/a62e49f749f3">HBase Data Block Encoding Types 介绍</a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-end">
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/_Compression-and-Data-Block-Encoding/_index.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#概述">概述</a>
+      <ul>
+        <li><a href="#-如何选择">❤ 如何选择</a></li>
+      </ul>
+    </li>
+    <li><a href="#编码器">编码器</a>
+      <ul>
+        <li><a href="#现有支持">现有支持</a></li>
+        <li><a href="#算法简介">算法简介</a></li>
+        <li><a href="#设置编码方式">设置编码方式</a></li>
+      </ul>
+    </li>
+    <li><a href="#压缩算法">压缩算法</a>
+      <ul>
+        <li><a href="#支持的算法">支持的算法</a></li>
+        <li><a href="#检查本地库">检查本地库</a></li>
+        <li><a href="#测试算法是否可用">测试算法是否可用</a></li>
+        <li><a href="#-压缩算法对比">❤ 压缩算法对比</a></li>
+        <li><a href="#设置压缩方式">设置压缩方式</a></li>
+        <li><a href="#测试压缩性能">测试压缩性能</a></li>
+      </ul>
+    </li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

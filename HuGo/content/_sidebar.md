@@ -11,11 +11,11 @@ headless: true
 * **Cli**
   * [hbase shell]({{< relref "/docs/Cli/HBase-Shell.md" >}})
 * **Core**
-  * [架构简介]({{< relref "/docs/Core/Architecture.md" >}})
   * [RowKey]({{< relref "/docs/Core/RowKey.md" >}})
   * [Family]({{< relref "/docs/Core/Family-Properties.md" >}})
   * [Filter]({{< relref "/docs/Core/Filter.md" >}})
-  * [_压缩和编码]({{< relref "/docs/Core/Compression-and-Data-Block-Encoding.md" >}})
+  * [_架构简介]({{< relref "/docs/Core/Architecture.md" >}})
+  * [_压缩和编码]({{< relref "/docs/Core/_Compression-and-Data-Block-Encoding" >}})
   * 写路径和优化
   * 读路径和优化
   * LSM Tree
@@ -24,5 +24,7 @@ headless: true
   * [HFile Tool 查看 HFile]({{< relref "/docs/Action/Hfile-Pretty-Printer.md" >}})
   * [如何使用 Bulk Loading]({{< relref "/docs/Action/How-To-Use-Hbase-Bulk-Loading.md" >}})
   * YCSB 测试
+* **Opt**
+  * _Zookeeper 目录结构
 
 
