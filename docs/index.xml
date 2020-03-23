@@ -15,7 +15,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://hello-world-example.github.io/HBase/_sidebar/</guid>
-      <description> Install  Docker 安装 HBase 单机本地文件系统 Docker 搭建单机 CDH 环境 HBase 配置简介 Port   Cli  hbase shell   Core  RowKey Family Filter _架构简介 压缩和编码 写路径和优化 读路径和优化 LSM Tree   Action  Delete 操作语义 HFile Tool 查看 HFile 如何使用 Bulk Loading YCSB 测试   Opt  _Zookeeper 目录结构    </description>
+      <description> Install  Docker 安装 HBase 单机本地文件系统 Docker 搭建单机 CDH 环境 HBase 配置简介 Port   Cli  hbase shell   Core  RowKey Family Filter _架构简介 压缩和编码 _写路径和优化 读路径和优化   Action  Delete 操作语义 HFile Tool 查看 HFile 如何使用 Bulk Loading YCSB 测试   Opt  _Zookeeper 目录结构    </description>
     </item>
     
     <item>
@@ -118,16 +118,6 @@ public CompareFilter(final CompareOp compareOp, final ByteArrayComparable compar
     
     <item>
       <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/Core/Read-Path/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://hello-world-example.github.io/HBase/docs/Core/Read-Path/</guid>
-      <description>第二个新功能是全链路 Off-heap，意思就是读写链路数据端到端 Off-heap，减少 java GC 带来的停顿，进一步降低 P999 延迟，提高吞吐。这个功能我们从两方面来实现的：写链路 Off-heap，我们使用在 RPC 层使用 Netty 的 Off-heap ByteBuffer，使用支持 Off-heap 的 Protobuf。同时使用 Off-heap 的 Chunk 来存储 Memstore 中的 KeyValue。
-在读链路 Off-heap 方面，使用 Off-heap 的 Bucket Cache，HBase 自己管理内存的，我们从 Bucket Cache 读取数据的时候，先要从 Protobuf 做一次拷贝，因为可能读取的时候，发生内存不够了，再次分配的情况。在读取对 Bucket Cache 进行引用计数，保证读取的时候，内存不会被回收掉，读取时不再需要先拷贝到 heap，对 Bucket Cache 进行了一系列性能优化。</description>
-    </item>
-    
-    <item>
-      <title></title>
       <link>https://hello-world-example.github.io/HBase/docs/Core/RowKey/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -135,15 +125,6 @@ public CompareFilter(final CompareOp compareOp, final ByteArrayComparable compar
       <description>Rowkey 设计  Rowkey 是一段二进制码流，最大长度为64KB Rowkey 以字典顺序排序，其方法是，按照字母顺序，或者数字小大顺序，由小到大的形成序列  Rowkey：123,321,2 顺序为: 123,2,321   查找数据的时候，先查找 Rowkey 所在的 Region，然后将求路由到该 Region 获取数据 按单个 Rowkey 检索的效率是很高的，耗时在1毫秒以下  设计原则 避免热点 避免热点首先要了解 Rowkey的排序规则 和 分区分类原理
  RowKey 按照 字典顺序 从小到大，如： 1, 12, 27, 3, 4, 66 如果没有预分区的话，刚开始所有的数据落在一个分区，当分区达到一定的阀值开始分裂，以上数据可能会分裂成 1, 12, 27 和 3, 4, 66 两个分区，每个分区记录 StartKey 和 EndKey， 多个分区会落在不同的机器上，避免热点的目的是为了利用集群的能力 和 减少分裂的次数，而不是操作都落在一台机器上  可以让头几位尽量是随机的而不是规律的产生，从而避免热点，大概有一下几种场景
  自增序列、时间戳 等自增序列  产生的数据类似于 11,12,13,14,15,16 ，假如现在有两个分区  [0,14..): 11,12,13 [14..,无穷):14,15,16 新生成 19,20,21,22 都会落在第二个分区   对于自增序列，可以通过转置的方式  比如对以上序列转置后变为，11,21,31,41,51,61 [0,4.</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://hello-world-example.github.io/HBase/docs/Core/Wirte-Path/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://hello-world-example.github.io/HBase/docs/Core/Wirte-Path/</guid>
-      <description>写路径和优化 并发写 </description>
     </item>
     
     <item>
@@ -211,7 +192,7 @@ Master hbase.</description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://hello-world-example.github.io/HBase/todo/</guid>
-      <description>TODO  HBase Zookeeper 目录结构 HFile 存储格式 Block Cache 和 MemStore MOB 写路径 写路径 hbase pe 新版压测工具： https://blog.csdn.net/shudaqi2010/article/details/89760946  </description>
+      <description>TODO  Block Cache 和 MemStore hbase pe 新版压测工具： https://blog.csdn.net/shudaqi2010/article/details/89760946 HBase Zookeeper 目录结构 HFile 存储格式 MOB 写路径 写路径 ConcurrentNavigableMap hbase:meta 表结构 Minor Compaction 策略 RegionSplit Region Merg 策略  </description>
     </item>
     
   </channel>

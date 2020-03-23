@@ -14,6 +14,7 @@
         <module>demo-hbase-client</module>
         <module>demo-hbase-server</module>
         <module>demo-hbase-tools</module>
+        <!-- <module>demo-hbase1-client</module>-->
     </modules>
 
 

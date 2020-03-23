@@ -10,7 +10,7 @@ import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 public class FilterMain {
 
     public static void main(String[] args) throws IOException, DeserializationException {
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
 //        Table table = connection.getTable(TableName.valueOf("hbase:meta"));
         Table table = connection.getTable(TableName.valueOf("dev_boss_remark_v1"));
@@ -54,9 +54,9 @@ public class FilterMain {
 
 
         ResultScanner scanner = table.getScanner(scan);
-        HBaseTool.Debug.printScanner(scanner);
+        HBaseTemplate.Debug.printScanner(scanner);
 
-        HBaseTool.Connect.close(connection);
+        HBaseTemplate.Connect.close(connection);
     }
 
 

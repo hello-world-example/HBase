@@ -25,7 +25,7 @@
 
 > 以上建议来自于 官方文档 [D.1. Which Compressor or Data Block Encoder To Use](http://hbase.apache.org/book.html#data.block.encoding.types)，**可能会略显陈旧**
 >
-> 可关注 `zstd` 这种压缩算法，适合小数据
+> 可关注 `zstd`、`lz4` 这些压缩算法
 >
 > - zstd 官方测试数据： https://github.com/facebook/zstd#benchmarks
 > - [zstd，未来可期的数据压缩算法](https://www.jianshu.com/p/71eb3071d3e0)
@@ -190,14 +190,16 @@ Exception in thread "main" java.lang.RuntimeException: native snappy library not
 
 ### ❤ 压缩算法对比
 
-|  编码器  | 场景 | 传说                                                         | 实现                                  |
-| :------: | :--: | ------------------------------------------------------------ | ------------------------------------- |
-| **zstd** |  热  | 压缩率比 `gz` 提高一倍<br />压缩性能与 `lz4`、`snappy` 相当甚至更好，是 `gz` 的 10倍以上 | `o.a.h.i.compress.ZStandardCodec`     |
-| **lz4**  |  热  | 与 `snappy`/`lzo` 比 压缩率相差不多，但解压缩更快            | `o.a.h.i.compress.Lz4Codec`           |
-|  snappy  |  热  | 压缩率没有 gz 高，但是 CPU 消耗更少                          | `o.a.h.i.compress.SnappyCodec`        |
-|  **gz**  |  冷  | 相比 `snappy`、`lzo` 压缩率更高，但 CPU 消耗的也更多         | `o.a.h.i.compress.GzipCodec`          |
-|  bzip2   |  冷  | 比 `gz` 压缩率高，单速度更慢                                 | `o.a.h.i.compress.BZip2Codec`         |
-| ~~lzo~~  |  热  | 可使用 `snappy` 代替                                         | `com.hadoop.compression.lzo.LzoCodec` |
+> 压缩算法对比数据： https://help.aliyun.com/document_detail/59373.html
+
+|  编码器  | 场景 | 传说                                                 | 实现                                  |
+| :------: | :--: | ---------------------------------------------------- | ------------------------------------- |
+| **lz4**  |  热  | 与 `snappy`/`lzo` 比 压缩率相差不多，但解压缩更快    | `o.a.h.i.compress.Lz4Codec`           |
+| **zstd** |  冷  | 压缩率是 `lz4` 的一倍，速度是 `lz4` 的一半           | `o.a.h.i.compress.ZStandardCodec`     |
+|  **gz**  |  冷  | 相比 `snappy`、`lzo` 压缩率更高，但 CPU 消耗的也更多 | `o.a.h.i.compress.GzipCodec`          |
+|  snappy  |  热  | 压缩率没有 gz 高，但是 CPU 消耗更少                  | `o.a.h.i.compress.SnappyCodec`        |
+|  bzip2   |  冷  | 比 `gz` 压缩率高，单速度更慢                         | `o.a.h.i.compress.BZip2Codec`         |
+| ~~lzo~~  |  热  | 可使用 `snappy` 代替                                 | `com.hadoop.compression.lzo.LzoCodec` |
 
 ### 设置压缩方式
 
@@ -278,5 +280,6 @@ $ hbase org.apache.hadoop.hbase.util.LoadTestTool \
 
 - Apache HBase ™ Reference Guide 
   - [Appendix D: Compression and Data Block Encoding In HBase](http://hbase.apache.org/book.html#compression)
+- [HBase最佳实践](https://help.aliyun.com/document_detail/59373.html) > [数据压缩与编码](https://help.aliyun.com/document_detail/59373.html)
 - [HBase Data Block Encoding Types 介绍](https://www.jianshu.com/p/a62e49f749f3)
 

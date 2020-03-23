@@ -72,9 +72,8 @@ https://github.com/alex-shpak/hugo-book
 <li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
 <li><a href="/HBase/docs/Core/Architecture/">_架构简介</a></li>
 <li><a href="/HBase/docs/Core/-Compression-and-Data-Block-Encoding/">压缩和编码</a></li>
-<li>写路径和优化</li>
+<li><a href="/HBase/docs/Core/-Write-Path/">_写路径和优化</a></li>
 <li>读路径和优化</li>
-<li>LSM Tree</li>
 </ul>
 </li>
 <li><strong>Action</strong>
@@ -151,7 +150,7 @@ https://github.com/alex-shpak/hugo-book
 </ul>
 <blockquote>
 <p>以上建议来自于 官方文档 <a href="http://hbase.apache.org/book.html#data.block.encoding.types">D.1. Which Compressor or Data Block Encoder To Use</a>，<strong>可能会略显陈旧</strong></p>
-<p>可关注 <code>zstd</code> 这种压缩算法，适合小数据</p>
+<p>可关注 <code>zstd</code>、<code>lz4</code> 这些压缩算法</p>
 <ul>
 <li>zstd 官方测试数据： <a href="https://github.com/facebook/zstd#benchmarks">https://github.com/facebook/zstd#benchmarks</a></li>
 <li><a href="https://www.jianshu.com/p/71eb3071d3e0">zstd，未来可期的数据压缩算法</a></li>
@@ -270,6 +269,9 @@ $ hbase org.apache.hadoop.hbase.util.CompressionTest /root/snappy snappy
 Exception in thread <span style="color:#e6db74">&#34;main&#34;</span> java.lang.RuntimeException: native snappy library not available: this version of libhadoop was built without snappy support.
 ..
 </code></pre></div><h3 id="-压缩算法对比">❤ 压缩算法对比</h3>
+<blockquote>
+<p>压缩算法对比数据： <a href="https://help.aliyun.com/document_detail/59373.html">https://help.aliyun.com/document_detail/59373.html</a></p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -281,28 +283,28 @@ Exception in thread <span style="color:#e6db74">&#34;main&#34;</span> java.lang.
 </thead>
 <tbody>
 <tr>
-<td align="center"><strong>zstd</strong></td>
-<td align="center">热</td>
-<td>压缩率比 <code>gz</code> 提高一倍<!-- raw HTML omitted -->压缩性能与 <code>lz4</code>、<code>snappy</code> 相当甚至更好，是 <code>gz</code> 的 10倍以上</td>
-<td><code>o.a.h.i.compress.ZStandardCodec</code></td>
-</tr>
-<tr>
 <td align="center"><strong>lz4</strong></td>
 <td align="center">热</td>
 <td>与 <code>snappy</code>/<code>lzo</code> 比 压缩率相差不多，但解压缩更快</td>
 <td><code>o.a.h.i.compress.Lz4Codec</code></td>
 </tr>
 <tr>
-<td align="center">snappy</td>
-<td align="center">热</td>
-<td>压缩率没有 gz 高，但是 CPU 消耗更少</td>
-<td><code>o.a.h.i.compress.SnappyCodec</code></td>
+<td align="center"><strong>zstd</strong></td>
+<td align="center">冷</td>
+<td>压缩率是 <code>lz4</code> 的一倍，速度是 <code>lz4</code> 的一半</td>
+<td><code>o.a.h.i.compress.ZStandardCodec</code></td>
 </tr>
 <tr>
 <td align="center"><strong>gz</strong></td>
 <td align="center">冷</td>
 <td>相比 <code>snappy</code>、<code>lzo</code> 压缩率更高，但 CPU 消耗的也更多</td>
 <td><code>o.a.h.i.compress.GzipCodec</code></td>
+</tr>
+<tr>
+<td align="center">snappy</td>
+<td align="center">热</td>
+<td>压缩率没有 gz 高，但是 CPU 消耗更少</td>
+<td><code>o.a.h.i.compress.SnappyCodec</code></td>
 </tr>
 <tr>
 <td align="center">bzip2</td>
@@ -385,6 +387,7 @@ $ hbase org.apache.hadoop.hbase.util.LoadTestTool <span style="color:#ae81ff">\
 <li><a href="http://hbase.apache.org/book.html#compression">Appendix D: Compression and Data Block Encoding In HBase</a></li>
 </ul>
 </li>
+<li><a href="https://help.aliyun.com/document_detail/59373.html">HBase最佳实践</a> &gt; <a href="https://help.aliyun.com/document_detail/59373.html">数据压缩与编码</a></li>
 <li><a href="https://www.jianshu.com/p/a62e49f749f3">HBase Data Block Encoding Types 介绍</a></li>
 </ul>
 </article>

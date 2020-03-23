@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Write Path | HBase</title>
+
+
+<link rel="stylesheet" href="/HBase/book.min.1e3e633561e042c68ed4783655bbf51b60d828b4f105c877222be9136c62f219.css">
+
+
+
+
+<link rel="icon" href="/HBase/favicon.png" type="image/x-icon">
+
+
+<link rel="alternate" type="application/rss+xml" href="https://hello-world-example.github.io/HBase/docs/Core/-Write-Path/index.xml" title="HBase" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body>
+  <input type="checkbox" style="display: none" id="menu-control" />
+  <main class="flex container">
+
+    <aside class="book-menu fixed">
+      <nav>
+<h2 class="book-brand">
+  <a href="https://hello-world-example.github.io/HBase/">HBase</a>
+</h2>
+
+
+
+
+
+
+    
+  
+  
+  
+
+  <style>
+  nav ul a[href$="\2fHBase\2f docs\2f Core\2f-Write-Path\2f "] {
+      color: #004ed0;
+  }
+  </style>
+
+<ul>
+<li><strong>Install</strong>
+<ul>
+<li><a href="/HBase/docs/Install/Stand-Alone-By-Docker/">Docker 安装 HBase</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-Local-File/">单机本地文件系统</a></li>
+<li><a href="/HBase/docs/Install/Stand-Alone-CDH-Docker/">Docker 搭建单机 CDH 环境</a></li>
+<li><a href="/HBase/docs/Install/Properties/">HBase 配置简介</a></li>
+<li><a href="/HBase/docs/Core/Port/">Port</a></li>
+</ul>
+</li>
+<li><strong>Cli</strong>
+<ul>
+<li><a href="/HBase/docs/Cli/HBase-Shell/">hbase shell</a></li>
+</ul>
+</li>
+<li><strong>Core</strong>
+<ul>
+<li><a href="/HBase/docs/Core/RowKey/">RowKey</a></li>
+<li><a href="/HBase/docs/Core/Family-Properties/">Family</a></li>
+<li><a href="/HBase/docs/Core/Filter/">Filter</a></li>
+<li><a href="/HBase/docs/Core/Architecture/">_架构简介</a></li>
+<li><a href="/HBase/docs/Core/-Compression-and-Data-Block-Encoding/">压缩和编码</a></li>
+<li><a href="/HBase/docs/Core/-Write-Path/">_写路径和优化</a></li>
+<li>读路径和优化</li>
+</ul>
+</li>
+<li><strong>Action</strong>
+<ul>
+<li><a href="/HBase/docs/Action/Delete-API/">Delete 操作语义</a></li>
+<li><a href="/HBase/docs/Action/Hfile-Pretty-Printer/">HFile Tool 查看 HFile</a></li>
+<li><a href="/HBase/docs/Action/How-To-Use-Hbase-Bulk-Loading/">如何使用 Bulk Loading</a></li>
+<li>YCSB 测试</li>
+</ul>
+</li>
+<li><strong>Opt</strong>
+<ul>
+<li>_Zookeeper 目录结构</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+</nav>
+
+
+<script>
+(function() {
+  var menu = document.querySelector("aside.book-menu nav");
+  addEventListener("beforeunload", function(event) {
+    localStorage.setItem("menu.scrollTop", menu.scrollTop);
+  });
+  menu.scrollTop = localStorage.getItem("menu.scrollTop");
+})();
+</script>
+
+    </aside>
+
+    <div class="book-page">
+      <header class="flex align-center justify-between book-header">
+  <label for="menu-control">
+    <img src="/HBase/svg/menu.svg" alt="Menu" />
+  </label>
+  <strong>Write Path</strong>
+</header>
+
+      
+<article class="markdown"><h1 id="写路径和优化">写路径和优化</h1>
+<p>HBase 基于 LSM 模式，写的时候是 <strong>顺序写 WAL 和 MemStore 内存</strong>，基本没有随机IO，大部分时候写链路性能高效且平稳</p>
+<p>写路径的优化思路大部分有一些几种</p>
+<ul>
+<li><strong>减少重复操作的资源消耗</strong>：批量操作、本地缓存批量提交(可靠性降低)</li>
+<li><strong>可靠性 换 性能</strong>：本地缓存批量提交、WAL异步写入 或 跳过</li>
+<li><strong>读性能 换 写性能</strong>：增大 MemStore 减小 BlockCache</li>
+<li><strong>提升并行能力</strong>：预分区、扩展集群</li>
+</ul>
+<h2 id="概述">概述</h2>
+<ul>
+<li>Client 通过 Zookeeper 找到 <code>hbase:meta</code> 所在的 <code>RegionServer</code> &gt; <code>Region</code></li>
+<li>读取 <code>hbase:meta</code> 的信息缓存在 本地，根据 <code>StartKey</code> 和 <code>EndKey</code> 找到数据所在的  <code>RegionServer</code> &gt; <code>Region</code></li>
+</ul>
+<hr>
+<ul>
+<li>直连 <code>RegionServer</code> 进行数据的 写入 和 读取</li>
+<li>Client 本地有写缓存，默认自动提交</li>
+</ul>
+<hr>
+<ul>
+<li><code>RegionServer</code> 收到数据后，找到其管理的 <code>Region</code>，先写 <code>WAL</code> 用于服务宕机时的数据恢复，然后写<code>MemStore</code> 对内存中的 RowKey 进行整理和排序</li>
+</ul>
+<hr>
+<ul>
+<li>
+<p><code>MemStore</code> 在后台根据各种阈值 <code>flush</code> 内存到磁盘生成 <code>HFile</code> 真正的持久化</p>
+</li>
+<li>
+<p><code>Compact</code> 根据各种阈值对 <code>HFile</code> 进行合并，减少随机访问 来提升读取的性能</p>
+</li>
+</ul>
+<h2 id="客户端写入">客户端写入</h2>
+<h3 id="写缓冲区">写缓冲区</h3>
+<p>客户端写缓冲区就是在客户端 JVM 里面的缓存机制， 可以把多个Put操作攒到一起通过单个RPC请求发送给服务端， 目的是节省部分网络带来的 IO 消耗。</p>
+<h4 id="废弃的-api"><del>废弃的 API</del></h4>
+<p>在老的 API 中的，可通过 <code>HTable</code> (<code>HTableInterface</code>) 手动设置刷新缓存的大小 、关闭 AutoFlush、手动 <code>flushCommits</code>，使用方式如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">HTableInterface table <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>HTableInterface<span style="color:#f92672">)</span> connection<span style="color:#f92672">.</span><span style="color:#a6e22e">getTable</span><span style="color:#f92672">(</span>TableName<span style="color:#f92672">.</span><span style="color:#a6e22e">valueOf</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;test&#34;</span><span style="color:#f92672">));</span>
+<span style="color:#75715e">// hbase.client.write.buffer = 2097152
+</span><span style="color:#75715e"></span>table<span style="color:#f92672">.</span><span style="color:#a6e22e">setWriteBufferSize</span><span style="color:#f92672">(</span>2097152<span style="color:#f92672">);</span>
+<span style="color:#75715e">// 关闭自动提交
+</span><span style="color:#75715e"></span>table<span style="color:#f92672">.</span><span style="color:#a6e22e">setAutoFlush</span><span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+<span style="color:#75715e">// 提交
+</span><span style="color:#75715e"></span>table<span style="color:#f92672">.</span><span style="color:#a6e22e">flushCommits</span><span style="color:#f92672">();</span>
+</code></pre></div><p>1.0.0 之后，该接口被标记为废弃，2.0.0 后类已经被删除，被 <code>BufferedMutator</code> 代替。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">/**
+</span><span style="color:#75715e"> * @since 0.21.0
+</span><span style="color:#75715e"> * @deprecated use {@link org.apache.hadoop.hbase.client.Table} instead
+</span><span style="color:#75715e"> */</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">HTableInterface</span> <span style="color:#66d9ef">extends</span> Table <span style="color:#f92672">{</span>
+  <span style="color:#75715e">// @deprecated in 0.96.
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAutoFlush</span><span style="color:#f92672">(</span><span style="color:#66d9ef">boolean</span> autoFlush<span style="color:#f92672">);</span>
+  <span style="color:#75715e">// @deprecated in 0.99 since setting clearBufferOnFail is deprecated.  @see BufferedMutator#flush()
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAutoFlush</span><span style="color:#f92672">(</span><span style="color:#66d9ef">boolean</span> autoFlush<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> clearBufferOnFail<span style="color:#f92672">);</span>
+  <span style="color:#75715e">// @deprecated as of 1.0.0. Replaced by {@link BufferedMutator#flush()}
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">flushCommits</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> IOException<span style="color:#f92672">;</span>
+  <span style="color:#75715e">// @deprecated as of 1.0.0. Replaced by {@link BufferedMutator} and {@link BufferedMutatorParams#writeBufferSize(long)}
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setWriteBufferSize</span><span style="color:#f92672">(</span><span style="color:#66d9ef">long</span> writeBufferSize<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException<span style="color:#f92672">;</span>
+  <span style="color:#f92672">...</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>弃用的具体理由是这样的。在1.0版本之前客户端的设计可以简单归纳成以下几点：</p>
+<ul>
+<li>客户端会维护一个HTablePool， 这是一个存放HTable实例的线程池。</li>
+<li>HTable实例不会每次都创建新的， 而是从HTablePool中尝试获取实例， 获取不到再打开连接。</li>
+<li>每一个 HTable 都有一个写缓冲区， 用来加速批量操作。</li>
+</ul>
+<p><strong>旧的模式倾向于在内存中维持一个生命周期很长的HTable实例</strong>， 但是这个模式有一些问题：</p>
+<ul>
+<li>由于 HTable 的生存周期很长， 所以在它之上的写缓冲区（writeBuffer） 生命周期也很长， 如果同时创建了多个HTable， 那势必要消耗大量内存， 这就带来了一些内存管理问题了。 所以不应该一个HTable就带一个writeBuffer</li>
+<li>如果有多个 HTable 同时存在， 并且活的很久， 那就必须考虑一下线程安全问题了， 但是 HTable 对象又不是线程安全的。 这样需要做的开发工作又增加很多了</li>
+</ul>
+<p><strong>新的模式鼓励大家每次都创建一个 HTable 对象， 用完即释放，这样每一个HTable都是一个轻量级的对象</strong>。</p>
+<h4 id="bufferedmutator-写缓存">BufferedMutator 写缓存</h4>
+<p>使用方式如下</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">BufferedMutatorParams params <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> BufferedMutatorParams<span style="color:#f92672">(</span>TableName<span style="color:#f92672">.</span><span style="color:#a6e22e">valueOf</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;test&#34;</span><span style="color:#f92672">));</span>
+<span style="color:#75715e">// Buffer 大小 默认值通过 hbase.client.write.buffer 属性设置
+</span><span style="color:#75715e"></span>params<span style="color:#f92672">.</span><span style="color:#a6e22e">writeBufferSize</span><span style="color:#f92672">(</span>2097152<span style="color:#f92672">);</span>
+
+BufferedMutator mutator <span style="color:#f92672">=</span> connection<span style="color:#f92672">.</span><span style="color:#a6e22e">getBufferedMutator</span><span style="color:#f92672">(</span>params<span style="color:#f92672">);</span>
+<span style="color:#75715e">// 提交数据（Append、Delete、Increment、Put 都是 Mutation 的子类）
+</span><span style="color:#75715e"></span>mutator<span style="color:#f92672">.</span><span style="color:#a6e22e">mutate</span><span style="color:#f92672">(</span>puts<span style="color:#f92672">);</span>
+<span style="color:#75715e">// 刷新
+</span><span style="color:#75715e"></span>mutator<span style="color:#f92672">.</span><span style="color:#a6e22e">flush</span><span style="color:#f92672">();</span>
+<span style="color:#75715e">// 关闭
+</span><span style="color:#75715e"></span>mutator<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</code></pre></div><blockquote>
+<p><strong>目前推荐做法</strong></p>
+<ul>
+<li>推荐的做法就是什么都不做。 不需要显式地去调用 <code>BufferedMutator</code></li>
+<li>如果你需要批量插入，可以调用批量 put、 get、 delete 方法，每次发送多少数据，可自行控制</li>
+</ul>
+</blockquote>
+<h3 id="批量提交">批量提交</h3>
+<p>使用方式如下</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Table table <span style="color:#f92672">=</span> connection<span style="color:#f92672">.</span><span style="color:#a6e22e">getTable</span><span style="color:#f92672">(</span>TableName<span style="color:#f92672">.</span><span style="color:#a6e22e">valueOf</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">));</span>
+List<span style="color:#f92672">&lt;</span>Put<span style="color:#f92672">&gt;</span> batch <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;();</span>
+<span style="color:#75715e">// 无返回值，内部调用 batch 方法
+</span><span style="color:#75715e"></span>table<span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>batch<span style="color:#f92672">);</span>
+<span style="color:#75715e">// 第二个参数的结果
+</span><span style="color:#75715e"></span>table<span style="color:#f92672">.</span><span style="color:#a6e22e">batch</span><span style="color:#f92672">(</span>batch<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> Object<span style="color:#f92672">[</span>batch<span style="color:#f92672">.</span><span style="color:#a6e22e">size</span><span style="color:#f92672">()]);</span>
+</code></pre></div><p>批量提交的数据可能属于不同的 Region，batch 会事先的 Client 端进行数据分组，分批次发送到不同的 RegionServer，每组一个 RPC 请求，从而减少 RPC 调用次数。</p>
+<h4 id="针对同一行的批量提交">针对同一行的批量提交</h4>
+<p>批量提交存在一致性问题，但是 HBase 对同一行数据的操作支持原子操作，假设要对同一行数据同时进行删除又添加的操作，可通过 <code>table.mutateRow</code> 方式。</p>
+<p><code>mutateRow</code> <strong>只能针对同一行数据操作</strong>，如果设置的 RowKey 不一样，会抛出异常。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">Mutation put <span style="color:#f92672">=</span> <span style="color:#f92672">...;</span>
+Mutation delete <span style="color:#f92672">=</span> <span style="color:#f92672">...;</span>
+
+RowMutations rowMutations <span style="color:#f92672">=</span> RowMutations<span style="color:#f92672">.</span><span style="color:#a6e22e">of</span><span style="color:#f92672">(</span>Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">asList</span><span style="color:#f92672">(</span>delete<span style="color:#f92672">,</span> put<span style="color:#f92672">));</span>
+table<span style="color:#f92672">.</span><span style="color:#a6e22e">mutateRow</span><span style="color:#f92672">(</span>rowMutations<span style="color:#f92672">);</span>
+
+
+RowMutations mutations <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RowMutations<span style="color:#f92672">(</span>Bytes<span style="color:#f92672">.</span><span style="color:#a6e22e">toBytes</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;r1&#34;</span><span style="color:#f92672">));</span>
+mutations<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>put<span style="color:#f92672">);</span>
+mutations<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>delete<span style="color:#f92672">);</span>
+table<span style="color:#f92672">.</span><span style="color:#a6e22e">mutateRow</span><span style="color:#f92672">(</span>mutations<span style="color:#f92672">);</span>
+</code></pre></div><h2 id="服务端写入">服务端写入</h2>
+<h3 id="wal">WAL</h3>
+<p>WAL  Write Ahead Log 即 预写日志，用来解决宕机之后的数据恢复问题，数据到达 Region 后，先写 WAL 再写 MemStore，WAL 是顺序磁盘操作，如果能提升 WAL 的写入速度，</p>
+<h4 id="wal-写入模式">WAL 写入模式</h4>
+<p>在 Client 端可通过 <code>put.setDurability(Durability.SYNC_WAL)</code> 设置 WAL 的写入模式，可选值有以下几种：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> Durability <span style="color:#f92672">{</span>
+  <span style="color:#75715e">/**
+</span><span style="color:#75715e">   * 默认选项，等同于 SYNC_WAL
+</span><span style="color:#75715e">   */</span>
+  USE_DEFAULT<span style="color:#f92672">,</span>
+  <span style="color:#75715e">/**
+</span><span style="color:#75715e">   * 不写 WAL，只写 MemStore，服务宕机后，数据无法回复
+</span><span style="color:#75715e">   */</span>
+  SKIP_WAL<span style="color:#f92672">,</span>
+  <span style="color:#75715e">/**
+</span><span style="color:#75715e">   * 异步/延时（后台定时刷新）写 WAL，安全性高于 SKIP_WAL，但是仍然有 数据无法恢复的风险
+</span><span style="color:#75715e">   * 
+</span><span style="color:#75715e">   * 刷新间隔通过 hbase.regionserver.optionallogflushinterval 设置，默认 1s
+</span><span style="color:#75715e">   */</span>
+  ASYNC_WAL<span style="color:#f92672">,</span>
+  <span style="color:#75715e">/**
+</span><span style="color:#75715e">   * 默认行为，写 WAL 和 MemStore
+</span><span style="color:#75715e">   * 数据被刷新到文件系统实现，但不一定要刷新到磁盘。
+</span><span style="color:#75715e">   * 对于HDFS，指把数据刷新到 datanode 的个数（DataNode 的副本机制，不等待副本写入完成）
+</span><span style="color:#75715e">   */</span>
+  SYNC_WAL<span style="color:#f92672">,</span>
+  <span style="color:#75715e">/**
+</span><span style="color:#75715e">   * 强制刷磁盘，性能最差
+</span><span style="color:#75715e">   * 老版本与 SYNC_WAL 的行为是一样的，2.0后 有所区别
+</span><span style="color:#75715e">   */</span>
+  FSYNC_WAL
+<span style="color:#f92672">}</span>
+</code></pre></div><h4 id="wal-相关配置">WAL 相关配置</h4>
+<ul>
+<li>
+<p>WAL 的主要关注点在 <del><code>hbase.regionserver.maxlogs</code></del> WAL 日志文件的最大个数，默认 <code>32</code></p>
+</li>
+<li>
+<p>当文件个数超过这个阀值后，会触发 MemStore flush，引发 WAL 日志滚动，旧的日志会被清理掉，从而减少 WAL 的日志大小</p>
+</li>
+<li>
+<p>日志文件个数的<strong>建议值</strong>是： <code>堆大小 * MemStore占用堆的比例 / WAL 的文件大小</code></p>
+</li>
+<li>
+<p>WAL大小 = <code>hbase.regionserver.hlog.blocksize</code> * <code>hbase.regionserver.logroll.multiplier</code></p>
+</li>
+<li>
+<p>如果堆大小是16G，则 <code>maxlogs</code> 的建议值是： 16G * 0.4 / (128M * 0.95) ≈ <code>54</code> ，比默认值要大很多</p>
+</li>
+</ul>
+<blockquote>
+<p>从上面计算看出，默认值常常比建议值要小很多，而且计算公式并不被人熟知，给很多人带来操作上的麻烦，所以<strong>目前  <del><code>hbase.regionserver.maxlogs</code></del> 配置已经被废弃</strong></p>
+</blockquote>
+<ul>
+<li>目前内部的计算公式是 <code>Math.max(32, 堆大小 * MemStore占用堆的比例 * 2 / WAL 的文件大小)</code></li>
+<li>即 <code>2 * MemStore 的总大小 / WAL 的文件大小</code></li>
+<li>即 <strong>WAL 日志文件的总大小</strong> =  <strong>两倍的 MemStore 的总大小</strong> ≈ <strong>RegionServer 堆内存的大小</strong></li>
+</ul>
+<h3 id="memstore-flush">MemStore Flush</h3>
+<p>MemStore 主要对内存中的 KeyValue 进行排序整理，维持数据结构。</p>
+<p>当达到一定的阀值，会触发 MemStore 的 flush 操作生成 HFile，从而触发 Compact，频繁的 flush 和 compact 会导致写性能急剧下降，类似于 GC 的 STW。</p>
+<p>MemStore 的优化核心在于控制 flush，触发条件大概有一下几种</p>
+<h4 id="内存占用达到阀值">内存占用达到阀值</h4>
+<ul>
+<li>
+<p>通过 <strong><code>hbase.hregion.memstore.flush.size</code></strong> 配置，默认 128m（134217728）</p>
+</li>
+<li>
+<p>flush 阀值是定时检查的，每 10s（10000）检查一次，通过 <code>hbase.server.thread.wakefrequency</code> 配置</p>
+</li>
+<li>
+<p>如果写入数据量过大、过快，可能会触发 MemStore 的阻塞机制，<strong>禁止写入</strong></p>
+</li>
+</ul>
+<h4 id="-触发-store-阻塞机制">❤ 触发 Store 阻塞机制</h4>
+<ul>
+<li>阀值是  <strong><code>hbase.hregion.memstore.flush.size</code></strong> * <code>hbase.hregion.memstore.block.multiplier</code> （默认 <code>4</code>），即 一个检查周期内写入数据量超过 128m * 4 = <strong>512M</strong> 的时候<strong>触发阻塞</strong></li>
+<li>达到这个阀值会立即触发一次 flush，同时<strong>阻塞当前 Store 的写请求</strong></li>
+</ul>
+<h4 id="regionserver-的-memstore-总和达到阀值">RegionServer 的 MemStore 总和达到阀值</h4>
+<ul>
+<li><code>hbase.regionserver.global.memstore.size.lower.limit</code> 默认 <code>0.95</code>，即占用达到 <strong>全局 MemStore 容量</strong> 的 <code>95%</code> 触发刷新</li>
+<li><strong><code>hbase.regionserver.global.memstore.size</code></strong> 全局 MemStore 容量，也是百分比，默认 <code>0.4</code>， 即<strong>堆内存的 <code>40%</code></strong></li>
+</ul>
+<h4 id="-触发-regionserver-阻塞机制">❤ 触发 RegionServer 阻塞机制</h4>
+<ul>
+<li>假设当前 RegionServer 的 堆内存是 16G，默认配置情况下</li>
+<li>16G * <strong><code>hbase.regionserver.global.memstore.size</code></strong> * <code>hbase.regionserver.global.memstore.size.lower.limit</code> 即 <code>16*0.4*0.95</code>=<code>6.08G</code> 的时候触发 flush</li>
+<li>16G * <strong><code>hbase.regionserver.global.memstore.size</code></strong> 即  <code>16*0.4</code>=<code>6.4G</code> 的时候<strong>触发 RegionServer 级别的阻塞</strong></li>
+</ul>
+<h4 id="wal-的数量过多">WAL 的数量过多</h4>
+<p>WAL 的数量过多时，可以通过 flush 操作持久化，来减少 WAL 日志的占用。</p>
+<h4 id="memstore-达到刷写时间间隔">Memstore 达到刷写时间间隔</h4>
+<ul>
+<li>不管以上阀值是否达到，每个一段时间会主动触发一次 flush</li>
+<li>通过 <code>hbase.regionserver.optionalcacheflushinterval</code> 设置，默认 3600000ms 即 1h，如果为 0 则关闭自动刷新功能</li>
+</ul>
+<h4 id="手动触发flush">手动触发flush</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt; help <span style="color:#e6db74">&#39;flush&#39;</span>
+Flush all regions in passed table or pass a region row to
+flush an individual region or a region server name whose format
+is <span style="color:#e6db74">&#39;host,port,startcode&#39;</span>, to flush all its regions.
+For example:
+
+  hbase&gt; flush <span style="color:#e6db74">&#39;TABLENAME&#39;</span>
+  hbase&gt; flush <span style="color:#e6db74">&#39;REGIONNAME&#39;</span>
+  hbase&gt; flush <span style="color:#e6db74">&#39;ENCODED_REGIONNAME&#39;</span>
+  hbase&gt; flush <span style="color:#e6db74">&#39;REGION_SERVER_NAME&#39;</span>
+</code></pre></div><h4 id="其他">其他</h4>
+<ul>
+<li>Region Split</li>
+<li>Region Merge</li>
+<li>..</li>
+</ul>
+<h3 id="hfile-compaction">HFile Compaction</h3>
+<p>每次 MemStore 的 flush 会生成一个 HFile，当 HFile 变多，读取的时候会导致寻址过多，影响查询性能。</p>
+<p>为了减少 HFile 的个数（碎片文件的个数），提升查询性能，需要对 HFile 进行 Compact 操作。</p>
+<p><strong>Compaction 时阻塞会阻塞  flush，反向触发 Store 的 block，进而上升到 RegionServer 的 block，这是影响 写入性能的关键，也是最复杂、最难优化的地方。</strong></p>
+<h4 id="minor-和-major-compaction">Minor 和 Major Compaction</h4>
+<ul>
+<li><code>Minor</code>：Store 中的 <strong>多个</strong> HFile合并为一个 HFile
+<ul>
+<li>移除 TTL 到达的数据</li>
+<li>被删除的数据并不移除</li>
+<li>触发频率较高</li>
+</ul>
+</li>
+<li><code>Major</code>：Store 中的 <strong>所有</strong> HFile合并为一个 HFile
+<ul>
+<li>被删除的数据 被真正移除</li>
+<li>移除 单元格内超过 MaxVersions 的版本数据</li>
+<li>触发频率较低， 默认为 7天一次</li>
+<li>因为消耗性能较大，不应该让它发生在业务高峰期， <strong>建议手动控制 Major Compaction 的时机</strong></li>
+</ul>
+</li>
+<li>为什么 Minor Compaction 可以移除 TTL 超期的数据，但是无法移除被删除的数据？
+<ul>
+<li>TTL 的移除条件在数据本身，即通过单条数据的时间即可判断</li>
+<li>被删除的数据是一条追加的 墓碑标示，标示和数据可能存在于多个 HFile 文件中，Minor Compaction 并不会一次性把 Store 中所有的 HFile 进行合并，每次只是合并一部分，对于单个 HFile 文件来说，无法得知数据被标记为删除，因为标记可能在其他 HFile 中</li>
+</ul>
+</li>
+</ul>
+<h2 id="预分区">预分区</h2>
+<p>Region 数量 少于 RegionServer 数量，说明还没有完全发挥集群的能力，压力不均</p>
+<h2 id="优化思路小结">优化思路小结</h2>
+<ul>
+<li>假如已经到了无法写入、集群经常卡死的地步，就要考虑临时放弃部分读取性能 来提升写性能</li>
+<li>JVM 内存
+<ul>
+<li>先看 RegionServer JVM 堆内存是否太小，默认 1G 肯定不够，如果内存充裕，可调整成 16G 甚至更大</li>
+<li>大 JVM 内存建议配合 <code>G1GC</code> 来减小 FullGC 的 STW 时间，避免暂停时间过长被 ZK 认为宕机，从而触发 RegionServer 的 误杀 和 自杀</li>
+<li>MemStore 启用 <code>MSLAB 策略</code>，MSLAB 与 <code>G1GC</code> 的思路类似，搭配可略微减小 GC 的时间</li>
+</ul>
+</li>
+<li>增大全局 MemStore 占比，减小 BlockCache 占比
+<ul>
+<li>调大 <code>hbase.regionserver.global.memstore.size</code> ，减小 <code>hfile.block.cache.size</code></li>
+<li>两者相加不能大于 <code>0.8</code>，即 堆内存的 <code>80%</code>，否则 HBase 无法启动</li>
+</ul>
+</li>
+<li>增大 Store 中 MemStore 大小，<code>hbase.hregion.memstore.flush.size</code> 默认 128M
+<ul>
+<li>使生成的 HFile 更大，数量更少，减少 Compact</li>
+<li>但是如果 512M 了还是阻塞，建议从 HFile 入手</li>
+</ul>
+</li>
+<li>❤ 调整 HFile 的 Compact 阀值，<code>hbase.hstore.blockingStoreFiles</code> 默认 <code>7</code>，可调整成 <code>上百</code> 甚至 <code>上千</code>
+<ul>
+<li>让 MemStore 可以 flush HFile 到磁盘上，即先一并照收，后续再想怎么整理数据</li>
+<li>HFile 个数变多后，会影响到读取的性能，但起码可保证在业务高峰期系统可正常运行，不会被卡死</li>
+<li>等到业务低峰期，定时 触发 Major Compact，对数据进行合并，提升读性能</li>
+</ul>
+</li>
+<li><del>调整 WAL 先关阀值，增大 maxlogs，避免达到  maxlogs 指定的文件个数，触发 MemStore flush</del>
+<ul>
+<li>maxlogs = <code>Math.max(32, 堆大小 * MemStore占用堆的比例 * 2 / WAL 的文件大小)</code></li>
+<li>调整 JVM 堆内存 和 MemStore 占比 即分子，maxlogs 就会变大</li>
+<li>调整 WAL 的文件大小 效果可能不大，因为 WAL 的文件越小，数量增长的越快；WAL 的文件越大，maxlogs 阀值越小</li>
+</ul>
+</li>
+<li>根据数据和业务特征，选择合适的 Compact 策略，减小影响范围</li>
+<li>最后：<strong>扩容基本可以解决所有性能压力问题</strong>，只要压力被分散的足够低和均匀，一般问题都可解决</li>
+</ul>
+<h2 id="read-more">Read More</h2>
+<ul>
+<li><a href="https://help.aliyun.com/document_detail/59373.html">HBase最佳实践</a> &gt; <a href="https://help.aliyun.com/document_detail/59069.html">write写入优化</a></li>
+<li><a href="https://mp.weixin.qq.com/s/4Ov-fF1nhZ3SA125mV4D2Q">一场HBase2.x的写入性能优化之旅</a></li>
+<li><a href="https://book.douban.com/subject/30115996/">《HBase不睡觉书》</a> &gt; 第8章 再快一点</li>
+<li><a href="https://blog.csdn.net/ukakasu/article/details/80020161">HBase写入优化</a></li>
+</ul>
+</article>
+
+      
+<div class="book-footer justify-end">
+  
+  
+  <div>
+    <a href="https://github.com/hello-world-example/HBase/edit/master/HuGo/content/docs/Core/-Write-Path/_index.md" target="_blank" rel="noopener">
+      <img src="/HBase/svg/edit.svg" alt="Edit" /> Edit this page
+    </a>
+  </div>
+  
+</div>
+
+
+      
+    </div>
+
+    
+  
+
+  <aside class="book-toc level-3 fixed">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#概述">概述</a></li>
+    <li><a href="#客户端写入">客户端写入</a>
+      <ul>
+        <li><a href="#写缓冲区">写缓冲区</a></li>
+        <li><a href="#批量提交">批量提交</a></li>
+      </ul>
+    </li>
+    <li><a href="#服务端写入">服务端写入</a>
+      <ul>
+        <li><a href="#wal">WAL</a></li>
+        <li><a href="#memstore-flush">MemStore Flush</a></li>
+        <li><a href="#hfile-compaction">HFile Compaction</a></li>
+      </ul>
+    </li>
+    <li><a href="#预分区">预分区</a></li>
+    <li><a href="#优化思路小结">优化思路小结</a></li>
+    <li><a href="#read-more">Read More</a></li>
+  </ul>
+</nav>
+  </aside>
+
+
+
+  </main>
+  
+  
+  
+</body>
+
+</html>

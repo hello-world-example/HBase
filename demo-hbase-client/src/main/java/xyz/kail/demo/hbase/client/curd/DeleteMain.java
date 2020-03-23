@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class DeleteMain {
 
     public static void main(String[] args) throws IOException {
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
         Table table = connection.getTable(TableName.valueOf("test"));
 
@@ -28,7 +28,7 @@ public class DeleteMain {
         table.delete(delete);
 
 
-        HBaseTool.Connect.close(connection);
+        HBaseTemplate.Connect.close(connection);
 
     }
 

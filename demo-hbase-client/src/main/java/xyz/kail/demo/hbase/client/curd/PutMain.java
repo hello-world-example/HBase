@@ -1,12 +1,10 @@
 package xyz.kail.demo.hbase.client.curd;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +19,7 @@ public class PutMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
         TableName kailTestTableName = TableName.valueOf("wordcount");
         Table table = connection.getTable(kailTestTableName);
@@ -43,7 +41,7 @@ public class PutMain {
 
         table.put(puts);
 
-        HBaseTool.Connect.close(connection);
+        HBaseTemplate.Connect.close(connection);
 
     }
 

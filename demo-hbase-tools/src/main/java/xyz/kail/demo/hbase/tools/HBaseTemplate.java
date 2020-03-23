@@ -7,6 +7,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
 import org.apache.hadoop.hbase.snapshot.SnapshotDoesNotExistException;
 import org.apache.hadoop.hbase.snapshot.SnapshotExistsException;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -15,6 +16,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,9 +24,27 @@ import java.util.stream.Stream;
  * HBase 工具类
  *
  * @author kail
+ * @see HConstants
+ * @see ConnectionConfiguration
  */
 @Slf4j
-public final class HBaseTool {
+public final class HBaseTemplate {
+
+    public static void main(String[] args) throws IOException {
+        Connection connection = Connect.getConnection("asd");
+        org.apache.hadoop.hbase.client.Table table = connection.getTable(TableName.valueOf(""));
+        List<Put> batch = new ArrayList<>();
+
+        Mutation put = new Put(Bytes.toBytes("r1"));
+        put.setDurability(Durability.SYNC_WAL)
+        Mutation delete = new Put(Bytes.toBytes("r1"));
+        RowMutations rowMutations = RowMutations.of(Arrays.asList(delete, put));
+        table.mutateRow(rowMutations);
+
+        RowMutations mutations = new RowMutations(Bytes.toBytes("r1"));
+        mutations.add(put);
+        mutations.add(delete);
+    }
 
     public static final class Connect {
 
@@ -35,7 +55,7 @@ public final class HBaseTool {
          */
         public static Connection getConnection(String quorum) throws IOException {
             Configuration hbaseConf = HBaseConfiguration.create();
-            hbaseConf.set("hbase.zookeeper.quorum", quorum);
+            hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, quorum);
             return ConnectionFactory.createConnection(hbaseConf);
         }
 
@@ -49,13 +69,20 @@ public final class HBaseTool {
     }
 
     public static final class Namespace {
+
+        public static Map<String, Map<String, String>> listDescriptor(Connection conn) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+
+            return Stream.of(admin.listNamespaceDescriptors()).collect(Collectors.toMap(
+                    NamespaceDescriptor::getName,
+                    NamespaceDescriptor::getConfiguration));
+        }
+
         /**
          * 获取所有 Namespace
          */
         public static Set<String> list(Connection conn) throws IOException {
-            @Cleanup final Admin admin = conn.getAdmin();
-            final NamespaceDescriptor[] nss = admin.listNamespaceDescriptors();
-            return Stream.of(nss).map(NamespaceDescriptor::getName).collect(Collectors.toSet());
+            return listDescriptor(conn).keySet();
         }
 
         /**
@@ -76,6 +103,19 @@ public final class HBaseTool {
 
             final NamespaceDescriptor namespaceDescriptor = NamespaceDescriptor.create(ns).build();
             admin.createNamespace(namespaceDescriptor);
+        }
+
+        public static void drop(Connection conn, String ns) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            admin.deleteNamespace(ns);
+        }
+
+        /**
+         * 同时删除表
+         */
+        public static void dropAndTable(Connection conn, String ns) throws IOException {
+            Table.dropAll(conn, ns);
+            Namespace.drop(conn, ns);
         }
     }
 
@@ -123,7 +163,8 @@ public final class HBaseTool {
             create(conn, tableName, columns);
         }
 
-        public static void create(Connection conn, TableName tableName, ColumnFamilyDescriptor... columns) throws IOException {
+        public static void create(Connection conn, TableName tableName,
+                                  ColumnFamilyDescriptor... columns) throws IOException {
             @Cleanup final Admin admin = conn.getAdmin();
             if (exist(conn, tableName)) {
                 return;
@@ -140,12 +181,22 @@ public final class HBaseTool {
             admin.createTable(tableDescriptor);
         }
 
-        public static void delete(Connection conn, TableName tableName) throws IOException {
+        public static void drop(Connection conn, TableName tableName) throws IOException {
             @Cleanup final Admin admin = conn.getAdmin();
 
             Table.disable(conn, tableName);
 
             admin.deleteTable(tableName);
+        }
+
+        public static void dropAll(Connection conn, String ns) throws IOException {
+            @Cleanup
+            Admin admin = conn.getAdmin();
+            TableName[] tableNames = admin.listTableNames(Pattern.compile(ns + ":.+"));
+            for (TableName tableName : tableNames) {
+                Table.disable(conn, tableName);
+                Table.drop(conn, tableName);
+            }
         }
 
         public static void disable(Connection conn, TableName tableName) throws IOException {
@@ -164,13 +215,69 @@ public final class HBaseTool {
 
         public static void rename(Connection conn, TableName oldTableName, TableName newTableName) throws IOException {
 
-            final String snapshotName = oldTableName + "__snapshot__";
+            final String snapshotName = oldTableName.getQualifierAsString() + "__snapshot__"
+                    + System.currentTimeMillis();
 
             Table.disable(conn, oldTableName);
             Snapshots.snapshot(conn, oldTableName, snapshotName);
             Snapshots.cloneSilent(conn, snapshotName, newTableName);
             Snapshots.delete(conn, snapshotName);
-            Table.delete(conn, oldTableName);
+            Table.drop(conn, oldTableName);
+        }
+    }
+
+    public static final class Field {
+
+        public static Put toPut(Cell cell) {
+            return toPut(cell, CellUtil.cloneQualifier(cell));
+        }
+
+        public static Put toPut(Cell cell, byte[] qualifier) {
+            Put put = new Put(CellUtil.cloneRow(cell));
+            put.addColumn(CellUtil.cloneFamily(cell), qualifier, cell.getTimestamp(), CellUtil.cloneValue(cell));
+            return put;
+        }
+
+        public static Put toPut(byte[] rowKey, Cell cell) {
+            Put put = new Put(rowKey);
+            put.addColumn(
+                    CellUtil.cloneFamily(cell),
+                    CellUtil.cloneQualifier(cell),
+                    cell.getTimestamp(),
+                    CellUtil.cloneValue(cell)
+            );
+            return put;
+        }
+
+        public static Put toPut(byte[] rowKey, Cell cell, byte[] newValue) {
+            Put put = new Put(rowKey);
+            put.addColumn(
+                    CellUtil.cloneFamily(cell),
+                    CellUtil.cloneQualifier(cell),
+                    cell.getTimestamp(),
+                    newValue
+            );
+            return put;
+        }
+
+        public static Delete toDelete(byte[] key) {
+            return new Delete(key);
+        }
+
+        public static Delete toDeleteRow(Cell cell) {
+            return toDelete(CellUtil.cloneRow(cell));
+        }
+
+        public static Delete toDeleteQualifier(Cell cell) {
+            Delete delete = toDeleteRow(cell);
+            delete.addColumns(CellUtil.cloneFamily(cell), CellUtil.cloneQualifier(cell));
+            return delete;
+        }
+
+        public static Delete toDeleteTimestamp(Cell cell) {
+            Delete delete = toDeleteRow(cell);
+            delete.addColumns(CellUtil.cloneFamily(cell), CellUtil.cloneQualifier(cell), cell.getTimestamp());
+            return delete;
         }
     }
 
@@ -189,10 +296,8 @@ public final class HBaseTool {
             return admin.listSnapshots().stream()
                     .collect(Collectors.toMap(
                             SnapshotDescription::getName,
-                            SnapshotDescription::getTableNameAsString
-                    ));
+                            SnapshotDescription::getTableNameAsString));
         }
-
 
         public static boolean exist(Connection conn, String snapshot) throws IOException {
             return list(conn).containsKey(snapshot);
@@ -297,6 +402,43 @@ public final class HBaseTool {
 
         // endregion
 
+        public static boolean isValid(byte[] startRow, byte[] stopRow) {
+            return isValid(startRow, stopRow, false);
+        }
+
+        /**
+         * @param startRow
+         * @param stopRow
+         * @param stopRowInclusive
+         * @return
+         * @see MultiRowRangeFilter.RowRange#isValid
+         */
+        public static boolean isValid(byte[] startRow, byte[] stopRow, boolean stopRowInclusive) {
+            return Bytes.equals(startRow, HConstants.EMPTY_BYTE_ARRAY)
+                    || Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY)
+                    || Bytes.compareTo(startRow, stopRow) < 0
+                    || (Bytes.compareTo(startRow, stopRow) == 0 && stopRowInclusive);
+        }
+
+    }
+
+    public static final class Tool {
+
+        public static void flush(Connection conn, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            admin.flush(tableName);
+        }
+
+        public static void minorCompact(Connection conn, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            admin.compact(tableName);
+        }
+
+        public static void majorCompact(Connection conn, TableName tableName) throws IOException {
+            @Cleanup final Admin admin = conn.getAdmin();
+            admin.majorCompact(tableName);
+        }
+
     }
 
     public static final class Debug {
@@ -311,7 +453,6 @@ public final class HBaseTool {
             for (Map.Entry<String, String> entry : entries) {
                 System.out.println("        " + entry.getKey() + ":" + entry.getValue());
             }
-
 
             System.out.println("    ColumnFamilies:");
             HColumnDescriptor[] columnFamilies = hTableDescriptor.getColumnFamilies();
@@ -329,15 +470,18 @@ public final class HBaseTool {
             System.out.print(":");
             System.out.print(Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
             System.out.print(":");
-            System.out.print(cell.getTimestamp() + "(" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(cell.getTimestamp())) + ")");
+            System.out.print(cell.getTimestamp() + "("
+                    + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(cell.getTimestamp())) + ")");
             System.out.print(" => ");
             System.out.println(Bytes.toString(CellUtil.cloneValue(cell)));
         }
 
         public static void printScanner(ResultScanner scanner) {
             final ScanMetrics scanMetrics = scanner.getScanMetrics();
-            System.out.println(scanMetrics.getMetricsMap());
-            System.out.println();
+            if (null != scanMetrics) {
+                System.out.println(scanMetrics.getMetricsMap());
+                System.out.println();
+            }
 
             //
             Iterator<Result> iterator = scanner.iterator();

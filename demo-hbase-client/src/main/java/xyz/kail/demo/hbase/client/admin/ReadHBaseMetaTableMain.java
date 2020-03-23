@@ -7,7 +7,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 
@@ -41,7 +41,7 @@ public class ReadHBaseMetaTableMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
         TableName tableName = TableName.valueOf("hbase:meta");
         Table table = connection.getTable(tableName);
@@ -50,7 +50,7 @@ public class ReadHBaseMetaTableMain {
          * 表描述
          */
         HTableDescriptor tableDescriptor = table.getTableDescriptor();
-        HBaseTool.Debug.printHTableDescriptor(tableDescriptor);
+        HBaseTemplate.Debug.printHTableDescriptor(tableDescriptor);
 
 
         ResultScanner scanner = table.getScanner(newScan("test_boss_operate_log_v1", "test_boss_operate_log_v1,"));
@@ -73,8 +73,8 @@ public class ReadHBaseMetaTableMain {
         }
 
 
-        HBaseTool.Connect.close(scanner);
-        HBaseTool.Connect.close(connection);
+        HBaseTemplate.Connect.close(scanner);
+        HBaseTemplate.Connect.close(connection);
 
     }
 

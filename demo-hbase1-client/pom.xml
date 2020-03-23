@@ -9,22 +9,20 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>demo-hbase-tools</artifactId>
+    <artifactId>demo-hbase1-client</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase2.version}</version>
+            <groupId>xyz.kail.demo</groupId>
+            <artifactId>demo-hbase-tools</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase2.version}</version>
+            <artifactId>hbase-client</artifactId>
+            <version>${hbase1.version}</version>
         </dependency>
-
     </dependencies>
-
 
 </project>

@@ -8,7 +8,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,7 +23,7 @@ public class GetMain {
 
     public static void main(String[] args) throws IOException {
 
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
         Table relBossOperateLogV1 = connection.getTable(TableName.valueOf("order_info"));
 
@@ -51,10 +51,10 @@ public class GetMain {
 
         List<Cell> cells = result.listCells();
         for (Cell cell : cells) {
-            HBaseTool.Debug.printCell(cell);
+            HBaseTemplate.Debug.printCell(cell);
         }
 
-        HBaseTool.Connect.close(connection);
+        HBaseTemplate.Connect.close(connection);
     }
 
 }

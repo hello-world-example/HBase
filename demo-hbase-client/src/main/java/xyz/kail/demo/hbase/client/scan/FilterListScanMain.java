@@ -9,7 +9,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import xyz.kail.demo.hbase.client.Rcore;
-import xyz.kail.demo.hbase.tools.HBaseTool;
+import xyz.kail.demo.hbase.tools.HBaseTemplate;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ import java.io.IOException;
 public class FilterListScanMain {
 
     public static void main(String[] args) throws IOException {
-        Connection connection = HBaseTool.Connect.getConnection(Rcore.QUORUM);
+        Connection connection = HBaseTemplate.Connect.getConnection(Rcore.QUORUM);
 
         Table table = connection.getTable(ScanInitDataMain.tableName);
 
@@ -48,7 +48,7 @@ public class FilterListScanMain {
 
         @Cleanup final ResultScanner scanner = table.getScanner(scan);
 
-        HBaseTool.Debug.printScanner(scanner);
+        HBaseTemplate.Debug.printScanner(scanner);
 
         System.out.println("start" + start);
         System.out.println("end  " + System.currentTimeMillis());
