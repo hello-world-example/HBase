@@ -16,7 +16,7 @@ headless: true
   * [Filter]({{< relref "/docs/Core/Filter.md" >}})
   * [_架构简介]({{< relref "/docs/Core/Architecture.md" >}})
   * [压缩和编码]({{< relref "/docs/Core/-Compression-and-Data-Block-Encoding" >}})
-  * [_写路径和优化]({{< relref "/docs/Core/-Write-Path" >}})
+  * [写路径和优化]({{< relref "/docs/Core/-Write-Path" >}})
   * 读路径和优化
 * **Action**
   * [Delete 操作语义]({{< relref "/docs/Action/Delete-API.md" >}})
