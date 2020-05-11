@@ -152,7 +152,7 @@ table.mutateRow(mutations);
 
 ### WAL
 
-WAL  Write Ahead Log 即 预写日志，用来解决宕机之后的数据恢复问题，数据到达 Region 后，先写 WAL 再写 MemStore，WAL 是顺序磁盘操作，如果能提升 WAL 的写入速度，
+WAL  Write Ahead Log 即 预写日志，用来解决宕机之后的数据恢复问题，数据到达 Region 后，先写 WAL 再写 MemStore，WAL 是顺序磁盘操作，如果能提升 WAL 的写入速度，，可提升整体写入速度（如果 MemStore 没有 Block 的情况下）。
 
 #### WAL 写入模式
 
